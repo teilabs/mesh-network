@@ -1,0 +1,16 @@
+{
+  "java.import.gradle.enabled": true,
+  "java.project.sourcePaths": [
+    "core/src/main/java",
+    "core/src/test/java",
+    "android/daemon/src/main/java",
+    "android/client/src/main/java"
+  ],
+  "java.completion.importOrder": [
+    "io.github.teilabs.*",
+    "java.*",
+    "javax.*",
+    "org.*",
+    "com.*"
+  ]
+}
