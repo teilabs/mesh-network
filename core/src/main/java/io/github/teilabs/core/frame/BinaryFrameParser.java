@@ -11,9 +11,10 @@ public class BinaryFrameParser implements FrameParser<byte[]> {
         byte version = buffer.get();
         byte type = buffer.get();
         int timestamp = buffer.getInt();
-        short appId = buffer.getShort();
-        byte[] senderPubKey = new byte[FrameConstants.PUBLICK_KEY_SIZE];
-        buffer.get(senderPubKey);
+        short srcAppId = buffer.getShort();
+        short dstAppId = buffer.getShort();
+        byte[] srcPubKey = new byte[FrameConstants.PUBLICK_KEY_SIZE];
+        buffer.get(srcPubKey);
         long dstRoutingId = buffer.getLong();
         byte[] signature = new byte[FrameConstants.SIGNATURE_SIZE];
         buffer.get(signature);
@@ -28,8 +29,9 @@ public class BinaryFrameParser implements FrameParser<byte[]> {
                 version,
                 type,
                 timestamp,
-                appId,
-                senderPubKey,
+                srcAppId,
+                dstAppId,
+                srcPubKey,
                 dstRoutingId,
                 signature,
                 path,
@@ -45,8 +47,9 @@ public class BinaryFrameParser implements FrameParser<byte[]> {
                 .put(frame.getVersion())
                 .put(frame.getType())
                 .putInt(frame.getTimestamp())
-                .putShort(frame.getAppId())
-                .put(frame.getSenderPubKey())
+                .putShort(frame.getSrcAppId())
+                .putShort(frame.getDstAppId())
+                .put(frame.getSrcPubKey())
                 .putLong(frame.getDstRoutingId())
                 .put(frame.getSignature())
                 .putShort((short) frame.getPath().length);
