@@ -1,7 +1,7 @@
-package io.github.teilabs.core;
+package io.github.teilabs.meshnet.core;
 
-import io.github.teilabs.core.frame.BinaryFrameParser;
-import io.github.teilabs.core.frame.Frame;
+import io.github.teilabs.meshnet.core.frame.BinaryFrameParser;
+import io.github.teilabs.meshnet.core.frame.Frame;
 
 public class MeshCore implements CoreInput {
     private final CoreEvents coreEvents;

@@ -3,7 +3,7 @@ plugins {
 }
 
 group = "io.github.teilabs"
-base.archivesName = "core"
+base.archivesName = "meshnet-core"
 
 repositories {
     mavenCentral()

@@ -1,4 +1,4 @@
-package io.github.teilabs.core.frame;
+package io.github.teilabs.meshnet.core.frame;
 
 public final class FrameConstants {
     public static final int VERSION = 1;

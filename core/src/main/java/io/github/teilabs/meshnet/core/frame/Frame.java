@@ -1,4 +1,4 @@
-package io.github.teilabs.core.frame;
+package io.github.teilabs.meshnet.core.frame;
 
 import java.util.Arrays;
 

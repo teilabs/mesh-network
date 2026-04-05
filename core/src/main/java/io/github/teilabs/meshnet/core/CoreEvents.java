@@ -1,4 +1,4 @@
-package io.github.teilabs.core;
+package io.github.teilabs.meshnet.core;
 
 public interface CoreEvents {
     void sendRawFrame(byte[] rawFrame, byte[] to);
