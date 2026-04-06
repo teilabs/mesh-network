@@ -2,12 +2,13 @@ package io.github.teilabs.meshnet.core.frame;
 
 import java.nio.ByteBuffer;
 
-public class BinaryFrameParser implements FrameParser {
+public class BinaryFrameCodec implements FrameCodec {
     @Override
     public Frame parse(byte[] rawFrame) {
         ByteBuffer buffer = ByteBuffer.wrap(rawFrame);
 
         byte version = buffer.get();
+        // parsing frame according to version
         switch (version) {
             case 1: {
                 byte type = buffer.get();
@@ -48,6 +49,7 @@ public class BinaryFrameParser implements FrameParser {
 
     @Override
     public byte[] serialize(Frame frame) {
+        // serializing frame according to version
         switch (frame.getVersion()) {
             case 1: {
                 ByteBuffer buffer = ByteBuffer
@@ -79,6 +81,7 @@ public class BinaryFrameParser implements FrameParser {
 
     @Override
     public byte[] serializeHeader(Frame frame) {
+        // serializing frame header according to version
         switch (frame.getVersion()) {
             case 1: {
                 ByteBuffer buffer = ByteBuffer

@@ -1,7 +1,5 @@
 package io.github.teilabs.meshnet.core.crypto;
 
-import org.bouncycastle.crypto.InvalidCipherTextException;
-
 public interface CryptoProvider {
     Ed25519KeyPair generateKeyPair();
 
@@ -9,7 +7,7 @@ public interface CryptoProvider {
 
     boolean verify(byte[] data, byte[] signature, byte[] publicKey);
 
-    byte[] encrypt(byte[] key, byte[] nonce, byte[] aad, byte[] plainData) throws IllegalStateException, InvalidCipherTextException;
+    byte[] encrypt(byte[] key, byte[] nonce, byte[] aad, byte[] plainData);
 
     byte[] decrypt(byte[] key, byte[] nonce, byte[] aad, byte[] cipherData);
 

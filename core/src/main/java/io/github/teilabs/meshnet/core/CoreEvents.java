@@ -7,5 +7,7 @@ public interface CoreEvents {
 
     void sendRawFrameToEveryone(byte[] rawFrame);
 
+    Ed25519KeyPair getKeyPair();
+
     Ed25519KeyPair saveKeyPair(Ed25519KeyPair keyPair);
 }

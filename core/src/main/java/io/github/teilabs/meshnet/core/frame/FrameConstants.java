@@ -2,6 +2,8 @@ package io.github.teilabs.meshnet.core.frame;
 
 /** Class with all Frame related constants. */
 public final class FrameConstants {
+    public static final int VERSION = 1;
+
     // Version 1
     // Sizes
     public static final int SIGNATURE_SIZE_v1 = 64;

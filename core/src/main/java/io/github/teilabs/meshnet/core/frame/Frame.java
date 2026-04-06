@@ -6,11 +6,21 @@ import java.util.Arrays;
  * Class for incoming and outgoing messages.
  */
 public final class Frame {
-    /** Simple Frame that distributes through all neighbours and stores in memory for future distributing. */
+    /**
+     * Simple Frame that distributes through all neighbours and stores in memory for
+     * future distributing.
+     */
     public static final byte TYPE_DATA = 0;
-    /** Frame witout any data except path. This frame is used to open tunnel (usually shortest ordered way that connects two devices through other nodes without self intersections). */
+    /**
+     * Frame witout any data except path. This frame is used to open tunnel (usually
+     * shortest ordered way that connects two devices through other nodes without
+     * self intersections).
+     */
     public static final byte TYPE_OPEN_TUNNEL = 1;
-    /** Frame with data and path. This frame is used to send data using already opened tunnel. */
+    /**
+     * Frame with data and path. This frame is used to send data using already
+     * opened tunnel.
+     */
     public static final byte TYPE_DATA_TUNNEL = 2;
     /** Frame without any data except path. This frame is used to close tunnel. */
     public static final byte TYPE_CLOSE_TUNNEL = 3;
@@ -21,26 +31,38 @@ public final class Frame {
     /** Type of Frame. (see TYPE_*) */
     private final byte type;
 
-    /**  Timestamp of Frame creation on source device. */
+    /** Timestamp of Frame creation on source device. */
     private final int timestamp;
 
     /** Id of application that initialized this Frame sending from source device. */
     private final short srcAppId;
-    /** Id of application that will receive this Frame on destination device. */
+    /**
+     * Id of application that will receive this Frame on destination device. Should
+     * be 0 for system frames like open and close tunnel.
+     */
     private final short dstAppId;
 
     /** Ed25519 public key of source device. */
     private final byte[] srcPubKey;
-    /** Routing Id (just first 8 bytes of Ed25519 publick key) of destination device. */
+    /**
+     * Routing Id (just first 8 bytes of Ed25519 publick key) of destination device.
+     */
     private final long dstRoutingId;
 
     /** 12 byte nonce used for encrypting this Frame data. */
     private final byte[] nonce;
 
-    /**  Ed25519 signature of this Frame header (part of frame, see {@link FrameParser.serializeHeader} implementations). */
+    /**
+     * Ed25519 signature of this Frame header (part of frame, see
+     * {@link FrameCodec.serializeHeader} implementations).
+     */
     private final byte[] signature;
 
-    /** Ordered array of routing Ids (just first 8 bytes of Ed25519 publick key) of devices that passed this Frame. Is not empty only if this Frame has tunnel related type. */
+    /**
+     * Ordered array of routing Ids (just first 8 bytes of Ed25519 publick key) of
+     * devices that passed this Frame. Is not empty only if this Frame has tunnel
+     * related type.
+     */
     private final long[] path;
 
     /** Frame body encrypted with AEAD (use header for aad and nonce for nonce). */
@@ -96,16 +118,18 @@ public final class Frame {
                 throw new IllegalArgumentException("Data frame mustn't have path and must have encrypted data");
             }
         } else if (type == TYPE_OPEN_TUNNEL) {
-            if (path.length == 0 || encryptedData.length != 0) {
-                throw new IllegalArgumentException("Open tunnel frame must have path and mustn't have encrypted data");
+            if (path.length == 0 || encryptedData.length != 0 || dstAppId != 0) {
+                throw new IllegalArgumentException(
+                        "Open tunnel frame must have path and mustn't have encrypted data. dstAppId must equal 0");
             }
         } else if (type == TYPE_DATA_TUNNEL) {
             if (path.length == 0 || encryptedData.length == 0) {
                 throw new IllegalArgumentException("Data tunnel frame must have path and must have encrypted data");
             }
         } else if (type == TYPE_CLOSE_TUNNEL) {
-            if (path.length == 0 || encryptedData.length != 0) {
-                throw new IllegalArgumentException("Close tunnel frame must have path and mustn't have encrypted data");
+            if (path.length == 0 || encryptedData.length != 0 || dstAppId != 0) {
+                throw new IllegalArgumentException(
+                        "Close tunnel frame must have path and mustn't have encrypted data. dstAppId must equal 0");
             }
         }
     }
