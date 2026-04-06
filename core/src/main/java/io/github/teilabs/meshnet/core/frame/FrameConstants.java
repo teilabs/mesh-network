@@ -1,10 +1,13 @@
 package io.github.teilabs.meshnet.core.frame;
 
+/** Class with all Frame related constants. */
 public final class FrameConstants {
-    public static final int VERSION = 1;
-    public static final int SIGNATURE_SIZE = 64;  // Ed25519
-    public static final int PUBLICK_KEY_SIZE = 32;
-    public static final int HEADER_SIZE = 20 + SIGNATURE_SIZE + PUBLICK_KEY_SIZE;
+    // Version 1
+    // Sizes
+    public static final int SIGNATURE_SIZE_v1 = 64;
+    public static final int PUBLICK_KEY_SIZE_v1 = 32;
+    public static final int NONCE_SIZE_v1 = 12;
+    public static final int HEADER_SIZE_v1 = 20 + SIGNATURE_SIZE_v1 + PUBLICK_KEY_SIZE_v1 + NONCE_SIZE_v1;
 
     private FrameConstants() {}
 }

@@ -1,6 +1,13 @@
 package io.github.teilabs.meshnet.core.frame;
 
-public interface FrameParser<RawFrameType> {
-    Frame parse(RawFrameType rawFrame);
-    RawFrameType serialize(Frame frame);
+/** Interface for parsing and serializing {@link Frame} according to its version. */
+public interface FrameParser {
+    /** Parses bytes to {@link Frame}. */
+    Frame parse(byte[] rawFrame);
+
+    /** Serializes {@link Frame} to bytes. */
+    byte[] serialize(Frame frame);
+    
+    /** Serializes only {@link Frame} header to bytes. */
+    byte[] serializeHeader(Frame frame);
 }

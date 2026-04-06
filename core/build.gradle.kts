@@ -20,6 +20,9 @@ dependencies {
     
     testCompileOnly("org.projectlombok:lombok:1.18.30")
     testAnnotationProcessor("org.projectlombok:lombok:1.18.30")
+    
+    // Bouncy Castle Crypto API
+    implementation("org.bouncycastle:bcprov-jdk18on:1.77")
 }
 
 configurations.all {
