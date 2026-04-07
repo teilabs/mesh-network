@@ -65,6 +65,15 @@ public final class Frame {
      */
     private final long[] path;
 
+    /**
+     * Position in path of node which received te frame. Is 0 if path is empty or if frame type is 1.
+     * <br>
+     * When you recieve frame with ype 2 or 3, pathPosition is position of your node
+     * in path, so that means that you can just send messge to node on pathPosition
+     * + 1.
+     */
+    private final short pathPosition;
+
     /** Frame body encrypted with AEAD (use header for aad and nonce for nonce). */
     private final byte[] encryptedData;
 
@@ -72,7 +81,7 @@ public final class Frame {
             long dstRoutingId,
             byte[] nonce,
             byte[] signature,
-            long[] path, byte[] encryptedData) {
+            long[] path, short pathPosition, byte[] encryptedData) {
         this.version = version;
         this.type = type;
         this.timestamp = timestamp;
@@ -83,6 +92,7 @@ public final class Frame {
         this.nonce = nonce;
         this.signature = (signature != null) ? signature.clone() : new byte[0];
         this.path = (path != null) ? path.clone() : new long[0];
+        this.pathPosition = pathPosition;
         this.encryptedData = (encryptedData != null) ? encryptedData.clone() : new byte[0];
 
         validateFields();
@@ -114,8 +124,9 @@ public final class Frame {
     /** Validates type related fields. */
     private void validateByType() {
         if (type == TYPE_DATA) {
-            if (path.length != 0 || encryptedData.length == 0) {
-                throw new IllegalArgumentException("Data frame mustn't have path and must have encrypted data");
+            if (path.length != 0 || encryptedData.length == 0 || pathPosition != 0) {
+                throw new IllegalArgumentException(
+                        "Data frame mustn't have path and must have encrypted data. pathPosition must equal 0");
             }
         } else if (type == TYPE_OPEN_TUNNEL) {
             if (path.length == 0 || encryptedData.length != 0 || dstAppId != 0) {
@@ -174,6 +185,10 @@ public final class Frame {
         return path.clone();
     }
 
+    public short getPathPosition() {
+        return pathPosition;
+    }
+
     public byte[] getEncryptedData() {
         return encryptedData.clone();
     }
@@ -190,6 +205,7 @@ public final class Frame {
                 && Arrays.equals(srcPubKey, frame.srcPubKey)
                 && Arrays.equals(signature, frame.signature)
                 && Arrays.equals(path, frame.path)
+                && pathPosition == frame.pathPosition
                 && Arrays.equals(encryptedData, frame.encryptedData);
     }
 
@@ -204,6 +220,7 @@ public final class Frame {
         result = 31 * result + Arrays.hashCode(srcPubKey);
         result = 31 * result + Arrays.hashCode(signature);
         result = 31 * result + Arrays.hashCode(path);
+        result = 31 * result + pathPosition;
         result = 31 * result + Arrays.hashCode(encryptedData);
         return result;
     }

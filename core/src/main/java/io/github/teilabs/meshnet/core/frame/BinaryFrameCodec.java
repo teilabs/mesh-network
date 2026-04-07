@@ -27,6 +27,7 @@ public class BinaryFrameCodec implements FrameCodec {
                 for (int i = 0; i < pathLenght; i++) {
                     path[i] = buffer.getLong();
                 }
+                short pathPosition = buffer.getShort();
                 byte[] encryptedData = new byte[buffer.remaining()];
 
                 return new Frame(
@@ -40,6 +41,7 @@ public class BinaryFrameCodec implements FrameCodec {
                         nonce,
                         signature,
                         path,
+                        pathPosition,
                         encryptedData);
             }
             default:
@@ -70,6 +72,7 @@ public class BinaryFrameCodec implements FrameCodec {
                 for (long l : frame.getPath()) {
                     buffer.putLong(l);
                 }
+                buffer.putShort(frame.getPathPosition());
                 buffer.put(frame.getEncryptedData());
 
                 return buffer.array();
@@ -85,19 +88,20 @@ public class BinaryFrameCodec implements FrameCodec {
         switch (frame.getVersion()) {
             case 1: {
                 ByteBuffer buffer = ByteBuffer
-                .allocate(FrameConstants.HEADER_SIZE_v1 + 8 * frame.getPath().length + frame.getEncryptedData().length);
+                        .allocate(FrameConstants.HEADER_SIZE_v1 + 8 * frame.getPath().length
+                                + frame.getEncryptedData().length);
 
-        buffer
-                .put(frame.getVersion())
-                .put(frame.getType())
-                .putInt(frame.getTimestamp())
-                .putShort(frame.getSrcAppId())
-                .putShort(frame.getDstAppId())
-                .put(frame.getSrcPubKey())
-                .putLong(frame.getDstRoutingId())
-                .put(frame.getNonce());
+                buffer
+                        .put(frame.getVersion())
+                        .put(frame.getType())
+                        .putInt(frame.getTimestamp())
+                        .putShort(frame.getSrcAppId())
+                        .putShort(frame.getDstAppId())
+                        .put(frame.getSrcPubKey())
+                        .putLong(frame.getDstRoutingId())
+                        .put(frame.getNonce());
 
-        return buffer.array();
+                return buffer.array();
             }
             default:
                 throw new IllegalArgumentException("Unsopported frame version.");

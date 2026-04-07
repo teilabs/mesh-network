@@ -40,7 +40,8 @@ public class DefaultFrameRouter implements FrameRouter {
             switch (frame.getType()) {
                 case 0: {
                     if (frameBuffer.containsFrame(frame)) {
-                        // TODO: if destination peer connected to us, send frame to destination peer immediatly without storing
+                        // TODO: if destination peer connected to us, send frame to destination peer
+                        // immediatly without storing
                         frameBuffer.addFrame(frame);
                         frameRouterEvents.sendFrameToEveryone(frame);
                     }
@@ -57,23 +58,21 @@ public class DefaultFrameRouter implements FrameRouter {
                     frameRouterEvents.sendFrameToEveryone(
                             new Frame(frame.getVersion(), frame.getType(), frame.getTimestamp(), frame.getSrcAppId(),
                                     frame.getDstAppId(), frame.getSrcPubKey(), frame.getDstRoutingId(),
-                                    frame.getNonce(), frame.getSignature(), path, frame.getEncryptedData()));
+                                    frame.getNonce(), frame.getSignature(), path, frame.getPathPosition(),
+                                    frame.getEncryptedData()));
                     break;
                 }
                 case 2, 3: {
-                    Long nextRoutingId = null;
-                    // Finding first occurency of this node routing id in the path to get the next
-                    // receiver
-                    for (int i = 0; i < frame.getPath().length; i++) {
-                        if (frame.getPath()[i] == routingId) {
-                            nextRoutingId = frame.getPath()[i + 1];
-                            break;
-                        }
-                    }
-                    if (nextRoutingId == null) {
+                    if (frame.getPath()[frame.getPathPosition()] == routingId) {
+                        frameRouterEvents.sendFrame(new Frame(frame.getVersion(), frame.getType(), frame.getTimestamp(),
+                                frame.getSrcAppId(),
+                                frame.getDstAppId(), frame.getSrcPubKey(), frame.getDstRoutingId(),
+                                frame.getNonce(), frame.getSignature(), frame.getPath(),
+                                (short) (frame.getPathPosition() + 1),
+                                frame.getEncryptedData()), frame.getPath()[frame.getPathPosition() + 1]);
+                    } else {
                         throw new RuntimeException("Can't find routingId in path.");
                     }
-                    frameRouterEvents.sendFrame(frame, nextRoutingId);
                     break;
                 }
             }
@@ -85,7 +84,8 @@ public class DefaultFrameRouter implements FrameRouter {
         switch (frame.getType()) {
             case 0: {
                 if (frameBuffer.containsFrame(frame)) {
-                    // TODO: if destination peer connected to us, send frame to destination peer immediatly without storing
+                    // TODO: if destination peer connected to us, send frame to destination peer
+                    // immediatly without storing
                     frameBuffer.addFrame(frame);
                     frameRouterEvents.sendFrameToEveryone(frame);
                 }

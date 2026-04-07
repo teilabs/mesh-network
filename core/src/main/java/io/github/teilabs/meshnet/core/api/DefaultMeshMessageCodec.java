@@ -50,7 +50,7 @@ public final class DefaultMeshMessageCodec implements MeshMessageCodec {
 
         // Serialize header fields for future usage
         byte[] serializedHeader = frameCodec.serializeHeader(new Frame(version, type, timestamp, srcAppId,
-                dstAppId, srcPubKey, dstRoutingId, nonce, new byte[0], new long[0], new byte[0]));
+                dstAppId, srcPubKey, dstRoutingId, nonce, new byte[0], new long[0], (short) 0, new byte[0]));
 
         byte[] signature = cryptoProvider.sign(serializedHeader,
                 keyPair.privateKey());
@@ -67,6 +67,7 @@ public final class DefaultMeshMessageCodec implements MeshMessageCodec {
 
         return new Frame(
                 version, type, timestamp, srcAppId, dstAppId, srcPubKey, dstRoutingId, nonce, signature, path,
+                (short) 1,
                 encryptedData);
     }
 }
