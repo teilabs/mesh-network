@@ -5,6 +5,7 @@ import io.github.teilabs.meshnet.core.crypto.Ed25519KeyPair;
 import io.github.teilabs.meshnet.core.frame.Frame;
 import io.github.teilabs.meshnet.core.frame.FrameCodec;
 import io.github.teilabs.meshnet.core.frame.FrameConstants;
+import io.github.teilabs.meshnet.core.routing.TunnelManager;
 import java.nio.ByteBuffer;
 
 public final class DefaultMeshMessageCodec implements MeshMessageCodec {
@@ -14,10 +15,14 @@ public final class DefaultMeshMessageCodec implements MeshMessageCodec {
 
     private Ed25519KeyPair keyPair;
 
-    public DefaultMeshMessageCodec(CryptoProvider cryptoProvider, FrameCodec frameCodec, Ed25519KeyPair keyPair) {
+    private final TunnelManager tunnelManager;
+
+    public DefaultMeshMessageCodec(CryptoProvider cryptoProvider, FrameCodec frameCodec, Ed25519KeyPair keyPair,
+            TunnelManager tunnelManager) {
         this.cryptoProvider = cryptoProvider;
         this.frameCodec = frameCodec;
         this.keyPair = keyPair;
+        this.tunnelManager = tunnelManager;
     }
 
     @Override
@@ -28,7 +33,8 @@ public final class DefaultMeshMessageCodec implements MeshMessageCodec {
         }
         byte[] decryptedData = cryptoProvider.decrypt(keyPair.privateKey(), frame.getNonce(),
                 frameCodec.serializeHeader(frame), frame.getEncryptedData());
-        return new MeshIncomingMessage(frame.getTimestamp(), frame.getSrcAppId(), frame.getSrcPubKey(), decryptedData);
+        return new MeshIncomingMessage(frame.getTimestamp(), frame.getSrcAppId(), frame.getDstAppId(),
+                frame.getSrcPubKey(), decryptedData);
     }
 
     @Override
@@ -49,8 +55,12 @@ public final class DefaultMeshMessageCodec implements MeshMessageCodec {
         byte[] signature = cryptoProvider.sign(serializedHeader,
                 keyPair.privateKey());
         long[] path = new long[0];
-        if (type == 1 || type == 2 || type == 3) {
-            // TODO: create opened tunnel storage and get path from it
+        if (type == 1) {
+            path = new long[1];
+            path[0] = ByteBuffer.wrap(srcPubKey, 0, 8).getLong();
+        }
+        if (type == 2 || type == 3) {
+            path = tunnelManager.getTunnel(dstRoutingId).getPath();
         }
         byte[] encryptedData = cryptoProvider.encrypt(message.getDstPubKey(), nonce, serializedHeader,
                 message.getdata());

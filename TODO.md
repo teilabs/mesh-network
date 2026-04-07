@@ -1,1 +1,1 @@
-## Add javadoc for core.crypto, core.api, MeshCore, CoreEvents and CoreInput
+## Add javadoc for core.crypto, core.api, core.routing, MeshCore, CoreEvents and CoreInput

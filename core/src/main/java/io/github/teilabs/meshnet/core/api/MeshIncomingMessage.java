@@ -3,20 +3,22 @@ package io.github.teilabs.meshnet.core.api;
 import io.github.teilabs.meshnet.core.frame.FrameConstants;
 import java.util.Arrays;
 
-public class MeshIncomingMessage {
+public final class MeshIncomingMessage {
     private final int timestamp;
 
     private final short srcAppId;
+    private final short dstAppId;
 
     private final byte[] srcPubKey;
 
     private final byte[] data;
 
-    public MeshIncomingMessage(int timestamp, short srcAppId, byte[] srcPubKey,
+    public MeshIncomingMessage(int timestamp, short srcAppId, short dstAppId, byte[] srcPubKey,
             byte[] data) {
 
         this.timestamp = timestamp;
         this.srcAppId = srcAppId;
+        this.dstAppId = dstAppId;
         this.srcPubKey = (srcPubKey != null) ? srcPubKey.clone() : new byte[0];
         this.data = (data != null) ? data.clone() : new byte[0];
 
@@ -37,6 +39,10 @@ public class MeshIncomingMessage {
 
     public short getSrcAppId() {
         return srcAppId;
+    }
+
+    public short getDstAppId() {
+        return dstAppId;
     }
 
     public byte[] getSrcPubKey() {

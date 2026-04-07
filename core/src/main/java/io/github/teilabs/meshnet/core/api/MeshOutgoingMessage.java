@@ -3,7 +3,7 @@ package io.github.teilabs.meshnet.core.api;
 import io.github.teilabs.meshnet.core.frame.FrameConstants;
 import java.util.Arrays;
 
-public class MeshOutgoingMessage {
+public final class MeshOutgoingMessage {
     /**
      * Simple Message that distributes through all neighbours and stores in memory
      * for future distributing.
