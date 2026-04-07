@@ -14,4 +14,11 @@ public interface CoreEvents {
 
     void transferMessageToApp(MeshIncomingMessage message);
 
+    void writeFile(String path, byte[] data);
+
+    byte[] readFile(String path);
+
+    String[] listFiles(String folderPath);
+
+    void deleteFile(String path);
 }

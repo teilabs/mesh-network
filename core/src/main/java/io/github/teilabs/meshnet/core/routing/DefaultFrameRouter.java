@@ -3,6 +3,7 @@ package io.github.teilabs.meshnet.core.routing;
 import io.github.teilabs.meshnet.core.api.DefaultMeshMessageCodec;
 import io.github.teilabs.meshnet.core.api.MeshIncomingMessage;
 import io.github.teilabs.meshnet.core.api.MeshMessageCodec;
+import io.github.teilabs.meshnet.core.buffer.FrameBuffer;
 import io.github.teilabs.meshnet.core.crypto.CryptoProvider;
 import io.github.teilabs.meshnet.core.crypto.Ed25519KeyPair;
 import io.github.teilabs.meshnet.core.frame.Frame;
@@ -18,12 +19,15 @@ public class DefaultFrameRouter implements FrameRouter {
 
     private final MeshMessageCodec meshMessageCodec;
 
+    private final FrameBuffer frameBuffer;
+
     public DefaultFrameRouter(Ed25519KeyPair keyPair, FrameRouterEvents frameRouterEvents,
             MeshMessageCodec meshMessageCodec, CryptoProvider cryptoProvider, FrameCodec frameCodec,
-            TunnelManager tunnelManager) {
+            TunnelManager tunnelManager, FrameBuffer frameBuffer) {
         this.keyPair = keyPair;
         this.routingId = ByteBuffer.wrap(keyPair.publicKey(), 0, 8).getLong();
         this.frameRouterEvents = frameRouterEvents;
+        this.frameBuffer = frameBuffer;
         this.meshMessageCodec = new DefaultMeshMessageCodec(cryptoProvider, frameCodec, keyPair, tunnelManager);
     }
 
@@ -35,8 +39,11 @@ public class DefaultFrameRouter implements FrameRouter {
         } else {
             switch (frame.getType()) {
                 case 0: {
-                    // TODO: put frame in storage for future distributing
-                    frameRouterEvents.sendFrameToEveryone(frame);
+                    if (frameBuffer.containsFrame(frame)) {
+                        // TODO: if destination peer connected to us, send frame to destination peer immediatly without storing
+                        frameBuffer.addFrame(frame);
+                        frameRouterEvents.sendFrameToEveryone(frame);
+                    }
                     break;
                 }
                 case 1: {
@@ -77,8 +84,11 @@ public class DefaultFrameRouter implements FrameRouter {
     public void sendFrame(Frame frame) {
         switch (frame.getType()) {
             case 0: {
-                // TODO: put frame in storage for future distributing
-                frameRouterEvents.sendFrameToEveryone(frame);
+                if (frameBuffer.containsFrame(frame)) {
+                    // TODO: if destination peer connected to us, send frame to destination peer immediatly without storing
+                    frameBuffer.addFrame(frame);
+                    frameRouterEvents.sendFrameToEveryone(frame);
+                }
                 break;
             }
             case 1: {

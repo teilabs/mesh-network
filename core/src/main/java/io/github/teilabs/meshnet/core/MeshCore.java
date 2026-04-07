@@ -4,13 +4,19 @@ import io.github.teilabs.meshnet.core.api.DefaultMeshMessageCodec;
 import io.github.teilabs.meshnet.core.api.MeshIncomingMessage;
 import io.github.teilabs.meshnet.core.api.MeshMessageCodec;
 import io.github.teilabs.meshnet.core.api.MeshOutgoingMessage;
+import io.github.teilabs.meshnet.core.buffer.FrameBuffer;
+import io.github.teilabs.meshnet.core.buffer.FrameBufferEvents;
+import io.github.teilabs.meshnet.core.buffer.PersistentFrameBuffer;
+import io.github.teilabs.meshnet.core.crypto.BouncyCastleCryptoProvider;
 import io.github.teilabs.meshnet.core.crypto.CryptoProvider;
 import io.github.teilabs.meshnet.core.crypto.Ed25519KeyPair;
+import io.github.teilabs.meshnet.core.frame.BinaryFrameCodec;
 import io.github.teilabs.meshnet.core.frame.Frame;
 import io.github.teilabs.meshnet.core.frame.FrameCodec;
 import io.github.teilabs.meshnet.core.routing.DefaultFrameRouter;
 import io.github.teilabs.meshnet.core.routing.FrameRouter;
 import io.github.teilabs.meshnet.core.routing.FrameRouterEvents;
+import io.github.teilabs.meshnet.core.routing.HashMapTunnelManager;
 import io.github.teilabs.meshnet.core.routing.TunnelManager;
 
 public class MeshCore implements CoreInput {
@@ -28,16 +34,41 @@ public class MeshCore implements CoreInput {
 
     private final FrameRouter frameRouter;
 
-    public MeshCore(CoreEvents coreEvents, FrameCodec frameCodec, CryptoProvider cryptoProvider,
-            TunnelManager tunnelManager) {
+    private final FrameBuffer frameBuffer;
+
+    public MeshCore(CoreEvents coreEvents) {
         this.coreEvents = coreEvents;
-        this.frameCodec = frameCodec;
-        this.cryptoProvider = cryptoProvider;
+
+        this.frameCodec = new BinaryFrameCodec();
+        this.cryptoProvider = new BouncyCastleCryptoProvider();
         this.keyPair = (this.coreEvents.getKeyPair() != null) ? this.coreEvents.getKeyPair()
                 : this.coreEvents.saveKeyPair(this.cryptoProvider.generateKeyPair());
-        this.tunnelManager = tunnelManager;
+        this.tunnelManager = new HashMapTunnelManager();
         this.meshMessageCodec = new DefaultMeshMessageCodec(this.cryptoProvider, this.frameCodec, this.keyPair,
                 this.tunnelManager);
+        this.frameBuffer = new PersistentFrameBuffer(new FrameBufferEvents() {
+
+            @Override
+            public void writeFile(String path, byte[] data) {
+                coreEvents.writeFile(path, data);
+            }
+
+            @Override
+            public byte[] readFile(String path) {
+                return coreEvents.readFile(path);
+            }
+
+            @Override
+            public String[] listFiles(String folderPath) {
+                return coreEvents.listFiles(folderPath);
+            }
+
+            @Override
+            public void deleteFile(String path) {
+                coreEvents.deleteFile(path);
+            }
+
+        }, this.frameCodec);
         this.frameRouter = new DefaultFrameRouter(this.keyPair, new FrameRouterEvents() {
 
             @Override
@@ -53,14 +84,14 @@ public class MeshCore implements CoreInput {
             @Override
             public void transferMessageToApp(MeshIncomingMessage message) {
                 if (message.getDstAppId() == 0) {
-                    // If appId == 0 proccess it by core
+                    // TODO: proccess it by core
                     // If type == 1 add this node to the end of the path
                     return;
                 }
                 coreEvents.transferMessageToApp(message);
             }
 
-        }, this.meshMessageCodec, this.cryptoProvider, this.frameCodec, this.tunnelManager);
+        }, this.meshMessageCodec, this.cryptoProvider, this.frameCodec, this.tunnelManager, this.frameBuffer);
     }
 
     @Override
