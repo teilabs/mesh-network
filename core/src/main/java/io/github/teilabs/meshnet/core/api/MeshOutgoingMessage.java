@@ -3,6 +3,12 @@ package io.github.teilabs.meshnet.core.api;
 import io.github.teilabs.meshnet.core.frame.FrameConstants;
 import java.util.Arrays;
 
+/**
+ * Repsresents message that will be converted to {@link Frame} and sended to
+ * destination device.
+ * <br>
+ * Client library gives this class to {@link MeshCore} when app initialize message sending.
+ */
 public final class MeshOutgoingMessage {
     /**
      * Simple Message that distributes through all neighbours and stores in memory
@@ -23,11 +29,18 @@ public final class MeshOutgoingMessage {
     /** Type of MeshOutgoingMessage. (see TYPE_*) */
     private final byte type;
 
+    /** Id of application that initialized this Frame sending from source device. */
     private final short srcAppId;
+    /**
+     * Id of application that will receive this Frame on destination device. Should
+     * be 0 for system frames like open and close tunnel.
+     */
     private final short dstAppId;
 
+    /** Ed25519 public key of destination device. */
     private final byte[] dstPubKey;
 
+    /** Data that will be sent to destination device. */
     private final byte[] data;
 
     public MeshOutgoingMessage(byte type, short srcAppId, short dstAppId, byte[] dstPubKey,

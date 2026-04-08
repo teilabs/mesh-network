@@ -3,14 +3,24 @@ package io.github.teilabs.meshnet.core.api;
 import io.github.teilabs.meshnet.core.frame.FrameConstants;
 import java.util.Arrays;
 
+/**
+ * Represents incoming {@link Frame} by storing only neccessary fields to give it to app
+ * through client library.
+ */
 public final class MeshIncomingMessage {
+    /** Timestamp of Frame creation on source device. */
+
     private final int timestamp;
 
+    /** Id of application that initialized this Frame sending from source device. */
     private final short srcAppId;
+    /** Id of application that will receive this Frame on destination device. */
     private final short dstAppId;
 
+    /** Ed25519 public key of source device. */
     private final byte[] srcPubKey;
 
+    /** Decrypted data from frame. */
     private final byte[] data;
 
     public MeshIncomingMessage(int timestamp, short srcAppId, short dstAppId, byte[] srcPubKey,

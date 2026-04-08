@@ -52,6 +52,7 @@ public final class DefaultMeshMessageCodec implements MeshMessageCodec {
         byte[] serializedHeader = frameCodec.serializeHeader(new Frame(version, type, timestamp, srcAppId,
                 dstAppId, srcPubKey, dstRoutingId, nonce, new byte[0], new long[0], (short) 0, new byte[0]));
 
+        // Signing frame header for author proving on destination node
         byte[] signature = cryptoProvider.sign(serializedHeader,
                 keyPair.privateKey());
         long[] path = new long[0];

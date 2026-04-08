@@ -5,6 +5,10 @@ import io.github.teilabs.meshnet.core.frame.FrameCodec;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
+/**
+ * Implementation of {@link FrameBuffer} that is using file storage to store
+ * frames.
+ */
 public class PersistentFrameBuffer implements FrameBuffer {
     private static final int MAX_FRAMES = 1000;
     public static final String FOLDER_PATH = "frame_buffer/";
@@ -31,10 +35,12 @@ public class PersistentFrameBuffer implements FrameBuffer {
 
     @Override
     public void addFrame(Frame frame) {
+        // Checks if frame is already exists to prevent collisions
         if (containsFrame(frame)) {
             throw new IllegalArgumentException("Frame already stored");
         }
 
+        // Remooves oldest stored frame until count of frames is less than MAX_FRAMES
         while (frames.size() >= MAX_FRAMES) {
             Frame firstFrame = frames.iterator().next();
             frameBufferEvents.deleteFile(FOLDER_PATH + firstFrame.hashCode() + ".bin");
