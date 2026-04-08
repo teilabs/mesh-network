@@ -21,4 +21,6 @@ public interface CoreEvents {
     String[] listFiles(String folderPath);
 
     void deleteFile(String path);
+
+    boolean checkConnectionToNode(long nodeRoutingId);
 }

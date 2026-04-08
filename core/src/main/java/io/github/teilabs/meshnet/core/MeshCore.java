@@ -91,6 +91,11 @@ public class MeshCore implements CoreInput {
                 coreEvents.transferMessageToApp(message);
             }
 
+            @Override
+            public boolean checkConnectionToNode(long nodeRoutingId) {
+                return coreEvents.checkConnectionToNode(nodeRoutingId);
+            }
+
         }, this.meshMessageCodec, this.cryptoProvider, this.frameCodec, this.tunnelManager, this.frameBuffer);
     }
 

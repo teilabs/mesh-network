@@ -8,12 +8,9 @@ import io.github.teilabs.meshnet.core.crypto.CryptoProvider;
 import io.github.teilabs.meshnet.core.crypto.Ed25519KeyPair;
 import io.github.teilabs.meshnet.core.frame.Frame;
 import io.github.teilabs.meshnet.core.frame.FrameCodec;
-import java.nio.ByteBuffer;
 
 public class DefaultFrameRouter implements FrameRouter {
     private Ed25519KeyPair keyPair;
-
-    private long routingId;
 
     private final FrameRouterEvents frameRouterEvents;
 
@@ -25,7 +22,6 @@ public class DefaultFrameRouter implements FrameRouter {
             MeshMessageCodec meshMessageCodec, CryptoProvider cryptoProvider, FrameCodec frameCodec,
             TunnelManager tunnelManager, FrameBuffer frameBuffer) {
         this.keyPair = keyPair;
-        this.routingId = ByteBuffer.wrap(keyPair.publicKey(), 0, 8).getLong();
         this.frameRouterEvents = frameRouterEvents;
         this.frameBuffer = frameBuffer;
         this.meshMessageCodec = new DefaultMeshMessageCodec(cryptoProvider, frameCodec, keyPair, tunnelManager);
@@ -33,15 +29,17 @@ public class DefaultFrameRouter implements FrameRouter {
 
     @Override
     public void onFrameRecieved(Frame frame) {
-        if (frame.getDstRoutingId() == ByteBuffer.wrap(keyPair.publicKey(), 0, 8).getLong()) {
+        if (frame.getDstRoutingId() == keyPair.routingId()) {
             MeshIncomingMessage message = meshMessageCodec.parseIncomingFrame(frame);
             frameRouterEvents.transferMessageToApp(message);
         } else {
             switch (frame.getType()) {
                 case 0: {
-                    if (frameBuffer.containsFrame(frame)) {
-                        // TODO: if destination peer connected to us, send frame to destination peer
-                        // immediatly without storing
+                    if (!frameBuffer.containsFrame(frame)) {
+                        if (frameRouterEvents.checkConnectionToNode(frame.getDstRoutingId())) {
+                            frameRouterEvents.sendFrame(frame, frame.getDstRoutingId());
+                            break;
+                        }
                         frameBuffer.addFrame(frame);
                         frameRouterEvents.sendFrameToEveryone(frame);
                     }
@@ -53,7 +51,7 @@ public class DefaultFrameRouter implements FrameRouter {
                     for (int i = 0; i < frame.getPath().length; i++) {
                         path[i] = frame.getPath()[i];
                     }
-                    path[frame.getPath().length] = routingId;
+                    path[frame.getPath().length] = keyPair.routingId();
 
                     frameRouterEvents.sendFrameToEveryone(
                             new Frame(frame.getVersion(), frame.getType(), frame.getTimestamp(), frame.getSrcAppId(),
@@ -63,7 +61,7 @@ public class DefaultFrameRouter implements FrameRouter {
                     break;
                 }
                 case 2, 3: {
-                    if (frame.getPath()[frame.getPathPosition()] == routingId) {
+                    if (frame.getPath()[frame.getPathPosition()] == keyPair.routingId()) {
                         frameRouterEvents.sendFrame(new Frame(frame.getVersion(), frame.getType(), frame.getTimestamp(),
                                 frame.getSrcAppId(),
                                 frame.getDstAppId(), frame.getSrcPubKey(), frame.getDstRoutingId(),
@@ -83,9 +81,11 @@ public class DefaultFrameRouter implements FrameRouter {
     public void sendFrame(Frame frame) {
         switch (frame.getType()) {
             case 0: {
-                if (frameBuffer.containsFrame(frame)) {
-                    // TODO: if destination peer connected to us, send frame to destination peer
-                    // immediatly without storing
+                if (!frameBuffer.containsFrame(frame)) {
+                    if (frameRouterEvents.checkConnectionToNode(frame.getDstRoutingId())) {
+                        frameRouterEvents.sendFrame(frame, frame.getDstRoutingId());
+                        break;
+                    }
                     frameBuffer.addFrame(frame);
                     frameRouterEvents.sendFrameToEveryone(frame);
                 }

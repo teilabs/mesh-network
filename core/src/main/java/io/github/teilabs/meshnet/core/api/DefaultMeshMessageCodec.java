@@ -57,7 +57,7 @@ public final class DefaultMeshMessageCodec implements MeshMessageCodec {
         long[] path = new long[0];
         if (type == 1) {
             path = new long[1];
-            path[0] = ByteBuffer.wrap(srcPubKey, 0, 8).getLong();
+            path[0] = keyPair.routingId();
         }
         if (type == 2 || type == 3) {
             path = tunnelManager.getTunnel(dstRoutingId).getPath();

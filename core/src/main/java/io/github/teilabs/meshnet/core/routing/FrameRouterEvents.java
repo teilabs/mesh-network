@@ -9,4 +9,6 @@ public interface FrameRouterEvents {
     void sendFrameToEveryone(Frame frame);
 
     void transferMessageToApp(MeshIncomingMessage message);
+
+    boolean checkConnectionToNode(long nodeRoutingId);
 }
