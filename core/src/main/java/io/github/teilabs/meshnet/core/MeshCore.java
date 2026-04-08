@@ -72,8 +72,8 @@ public class MeshCore implements CoreInput {
         this.frameRouter = new DefaultFrameRouter(this.keyPair, new FrameRouterEvents() {
 
             @Override
-            public void sendFrame(Frame frame, long to) {
-                coreEvents.sendRawFrame(frameCodec.serialize(frame), to);
+            public void sendFrame(Frame frame, long nodeRoutingId) {
+                coreEvents.sendRawFrame(frameCodec.serialize(frame), nodeRoutingId);
             }
 
             @Override

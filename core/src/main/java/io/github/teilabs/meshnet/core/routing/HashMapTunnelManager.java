@@ -2,6 +2,9 @@ package io.github.teilabs.meshnet.core.routing;
 
 import java.util.HashMap;
 
+/**
+ * Implementation of {@link TunnelManager} using HashMap to store {@link Tunnel tunnels}.
+ */
 public class HashMapTunnelManager implements TunnelManager {
     private final HashMap<Long, Tunnel> tunnels = new HashMap<>();
 

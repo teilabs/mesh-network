@@ -4,7 +4,7 @@ import io.github.teilabs.meshnet.core.api.MeshIncomingMessage;
 import io.github.teilabs.meshnet.core.crypto.Ed25519KeyPair;
 
 public interface CoreEvents {
-    void sendRawFrame(byte[] rawFrame, long to);
+    void sendRawFrame(byte[] rawFrame, long nodeRoutingId);
 
     void sendRawFrameToEveryone(byte[] rawFrame);
 

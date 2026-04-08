@@ -35,7 +35,10 @@ public class DefaultFrameRouter implements FrameRouter {
         } else {
             switch (frame.getType()) {
                 case 0: {
+                    // Checking that we aren't already distributing this frame
                     if (!frameBuffer.containsFrame(frame)) {
+                        // If we have connection to destination node we should immediatle send frame to
+                        // it without storing and redistributing
                         if (frameRouterEvents.checkConnectionToNode(frame.getDstRoutingId())) {
                             frameRouterEvents.sendFrame(frame, frame.getDstRoutingId());
                             break;
@@ -61,6 +64,9 @@ public class DefaultFrameRouter implements FrameRouter {
                     break;
                 }
                 case 2, 3: {
+                    // Chacking that pathPosition is correct
+                    // If it isn't it means that we aren't correct redistributor for this frame and
+                    // we can just skip it
                     if (frame.getPath()[frame.getPathPosition()] == keyPair.routingId()) {
                         frameRouterEvents.sendFrame(new Frame(frame.getVersion(), frame.getType(), frame.getTimestamp(),
                                 frame.getSrcAppId(),
@@ -81,7 +87,10 @@ public class DefaultFrameRouter implements FrameRouter {
     public void sendFrame(Frame frame) {
         switch (frame.getType()) {
             case 0: {
+                // Checking that we aren't already distributing this frame
                 if (!frameBuffer.containsFrame(frame)) {
+                    // If we have connection to destination node we should immediatle send frame to
+                    // it without storing and redistributing
                     if (frameRouterEvents.checkConnectionToNode(frame.getDstRoutingId())) {
                         frameRouterEvents.sendFrame(frame, frame.getDstRoutingId());
                         break;
