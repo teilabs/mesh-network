@@ -55,7 +55,7 @@ public class BinaryFrameCodec implements FrameCodec {
         switch (frame.getVersion()) {
             case 1: {
                 ByteBuffer buffer = ByteBuffer
-                        .allocate(FrameConstants.HEADER_SIZE_v1 + 8 * frame.getPath().length
+                        .allocate(FrameConstants.HEADER_SIZE_v1 + FrameConstants.SIGNATURE_SIZE_v1 + 8 * frame.getPath().length + 2
                                 + frame.getEncryptedData().length);
 
                 buffer
@@ -88,8 +88,7 @@ public class BinaryFrameCodec implements FrameCodec {
         switch (frame.getVersion()) {
             case 1: {
                 ByteBuffer buffer = ByteBuffer
-                        .allocate(FrameConstants.HEADER_SIZE_v1 + 8 * frame.getPath().length
-                                + frame.getEncryptedData().length);
+                        .allocate(FrameConstants.HEADER_SIZE_v1);
 
                 buffer
                         .put(frame.getVersion())
