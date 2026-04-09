@@ -2,6 +2,7 @@ package io.github.teilabs.meshnet.core;
 
 import io.github.teilabs.meshnet.core.api.MeshIncomingMessage;
 import io.github.teilabs.meshnet.core.crypto.Ed25519KeyPair;
+import io.github.teilabs.meshnet.core.routing.Tunnel;
 
 /**
  * Functions that {@link MeshCore} can call.
@@ -84,4 +85,12 @@ public interface CoreEvents {
      * @return true - if node is connecte, false - otherwise
      */
     boolean checkConnectionToNode(long nodeRoutingId);
+
+    /**
+     * Asks user to open the tunnel.
+     * 
+     * @param tunnel tunnel that we want to open
+     * @return true - if user accepted to open this tunnel, false - otherwise
+     */
+    boolean checkTunnelOpenAccess(Tunnel tunnel);
 }

@@ -8,7 +8,13 @@ import java.util.concurrent.ConcurrentHashMap;
  * tunnels}.
  */
 public class HashMapTunnelManager implements TunnelManager {
+    private final TunnelManagerEvents tunnelManagerEvents;
+
     private final Map<Long, Tunnel> tunnels = new ConcurrentHashMap<>();
+
+    public HashMapTunnelManager(TunnelManagerEvents tunnelManagerEvents) {
+        this.tunnelManagerEvents = tunnelManagerEvents;
+    }
 
     @Override
     public Tunnel getTunnel(long dstRoutingId) {
@@ -23,8 +29,10 @@ public class HashMapTunnelManager implements TunnelManager {
         if (tunnels.containsKey(tunnel.getPath()[tunnel.getPath().length - 1])) {
             throw new IllegalArgumentException("Tunnel already exists");
         }
-        // TODO: ask user for permission to open tunnel
-        tunnels.computeIfAbsent(tunnel.getPath()[tunnel.getPath().length - 1], k -> tunnel);
+        // Ask user for opening this tunnel before saving it
+        if (!tunnelManagerEvents.checkTunnelOpenAccess(tunnel)) {
+            tunnels.computeIfAbsent(tunnel.getPath()[tunnel.getPath().length - 1], k -> tunnel);
+        }
     }
 
     @Override

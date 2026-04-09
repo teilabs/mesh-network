@@ -17,7 +17,9 @@ import io.github.teilabs.meshnet.core.routing.DefaultFrameRouter;
 import io.github.teilabs.meshnet.core.routing.FrameRouter;
 import io.github.teilabs.meshnet.core.routing.FrameRouterEvents;
 import io.github.teilabs.meshnet.core.routing.HashMapTunnelManager;
+import io.github.teilabs.meshnet.core.routing.Tunnel;
 import io.github.teilabs.meshnet.core.routing.TunnelManager;
+import io.github.teilabs.meshnet.core.routing.TunnelManagerEvents;
 
 /**
  * Main class that provides communication between the daemon and other classes.
@@ -47,7 +49,14 @@ public class MeshCore implements CoreInput {
         // Get key pair from storage if it exists or create and store it otherwise
         this.keyPair = (this.coreEvents.getKeyPair() != null) ? this.coreEvents.getKeyPair()
                 : this.coreEvents.saveKeyPair(this.cryptoProvider.generateKeyPair());
-        this.tunnelManager = new HashMapTunnelManager();
+        this.tunnelManager = new HashMapTunnelManager(new TunnelManagerEvents() {
+
+            @Override
+            public boolean checkTunnelOpenAccess(Tunnel tunnel) {
+                return coreEvents.checkTunnelOpenAccess(tunnel);
+            }
+
+        });
         this.meshMessageCodec = new DefaultMeshMessageCodec(this.cryptoProvider, this.frameCodec, this.keyPair,
                 this.tunnelManager);
         this.frameBuffer = new PersistentFrameBuffer(new FrameBufferEvents() {
