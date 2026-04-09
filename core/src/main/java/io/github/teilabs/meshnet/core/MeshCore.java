@@ -19,6 +19,9 @@ import io.github.teilabs.meshnet.core.routing.FrameRouterEvents;
 import io.github.teilabs.meshnet.core.routing.HashMapTunnelManager;
 import io.github.teilabs.meshnet.core.routing.TunnelManager;
 
+/**
+ * Main class that provides communication between the daemon and other classes.
+ */
 public class MeshCore implements CoreInput {
     private final CoreEvents coreEvents;
 
@@ -41,6 +44,7 @@ public class MeshCore implements CoreInput {
 
         this.frameCodec = new BinaryFrameCodec();
         this.cryptoProvider = new BouncyCastleCryptoProvider();
+        // Get key pair from storage if it exists or create and store it otherwise
         this.keyPair = (this.coreEvents.getKeyPair() != null) ? this.coreEvents.getKeyPair()
                 : this.coreEvents.saveKeyPair(this.cryptoProvider.generateKeyPair());
         this.tunnelManager = new HashMapTunnelManager();

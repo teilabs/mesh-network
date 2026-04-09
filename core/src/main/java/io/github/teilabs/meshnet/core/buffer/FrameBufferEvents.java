@@ -28,5 +28,10 @@ public interface FrameBufferEvents {
      */
     String[] listFiles(String folderPath);
 
+    /**
+     * Deletes a file from the file system.
+     * 
+     * @param path The path to the file.
+     */
     void deleteFile(String path);
 }

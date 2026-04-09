@@ -9,7 +9,7 @@ import io.github.teilabs.meshnet.core.frame.Frame;
  */
 public interface FrameRouterEvents {
     /**
-     * Sends a frame to a specific node.
+     * Sends a frame to the specific node.
      *
      * @param frame frame to send
      * @param nodeRoutingId    routingId of node to send
