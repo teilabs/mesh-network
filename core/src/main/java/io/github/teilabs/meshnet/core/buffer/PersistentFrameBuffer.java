@@ -2,6 +2,7 @@ package io.github.teilabs.meshnet.core.buffer;
 
 import io.github.teilabs.meshnet.core.frame.Frame;
 import io.github.teilabs.meshnet.core.frame.FrameCodec;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -15,7 +16,7 @@ public class PersistentFrameBuffer implements FrameBuffer {
 
     private final FrameBufferEvents frameBufferEvents;
 
-    private final Set<Frame> frames = new LinkedHashSet<>();
+    private final Set<Frame> frames = Collections.synchronizedSet(new LinkedHashSet<>());
 
     private final FrameCodec frameCodec;
 

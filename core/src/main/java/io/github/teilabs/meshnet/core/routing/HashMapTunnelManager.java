@@ -1,12 +1,14 @@
 package io.github.teilabs.meshnet.core.routing;
 
-import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Implementation of {@link TunnelManager} using HashMap to store {@link Tunnel tunnels}.
+ * Implementation of {@link TunnelManager} using HashMap to store {@link Tunnel
+ * tunnels}.
  */
 public class HashMapTunnelManager implements TunnelManager {
-    private final HashMap<Long, Tunnel> tunnels = new HashMap<>();
+    private final Map<Long, Tunnel> tunnels = new ConcurrentHashMap<>();
 
     @Override
     public Tunnel getTunnel(long dstRoutingId) {
@@ -22,7 +24,7 @@ public class HashMapTunnelManager implements TunnelManager {
             throw new IllegalArgumentException("Tunnel already exists");
         }
         // TODO: ask user for permission to open tunnel
-        tunnels.put(tunnel.getPath()[tunnel.getPath().length - 1], tunnel);
+        tunnels.computeIfAbsent(tunnel.getPath()[tunnel.getPath().length - 1], k -> tunnel);
     }
 
     @Override
