@@ -7,11 +7,11 @@ import io.github.teilabs.meshnet.core.api.MeshOutgoingMessage;
  */
 public interface CoreInput {
     /**
-     * Called by daemon when it recieves frame bytes from another node.
+     * Called by daemon when it recieves bytes from another node.
      * 
-     * @param rawFrame recieved frame bytes
+     * @param bytes recieved bytes
      */
-    void onRawFrameRecieved(byte[] rawFrame);
+    void onBytesRecieved(byte[] bytes);
 
     /**
      * Called by daemon when app want to send messgae through mesh network.

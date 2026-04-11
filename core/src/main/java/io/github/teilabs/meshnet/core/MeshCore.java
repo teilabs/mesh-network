@@ -20,6 +20,17 @@ import io.github.teilabs.meshnet.core.routing.HashMapTunnelManager;
 import io.github.teilabs.meshnet.core.routing.Tunnel;
 import io.github.teilabs.meshnet.core.routing.TunnelManager;
 import io.github.teilabs.meshnet.core.routing.TunnelManagerEvents;
+import io.github.teilabs.meshnet.core.transport.BinaryTransportMessageCodec;
+import io.github.teilabs.meshnet.core.transport.DefaultTransportProvider;
+import io.github.teilabs.meshnet.core.transport.HashSetNodesManager;
+import io.github.teilabs.meshnet.core.transport.NodesManager;
+import io.github.teilabs.meshnet.core.transport.TransportMessageCodec;
+import io.github.teilabs.meshnet.core.transport.TransportProvider;
+import io.github.teilabs.meshnet.core.transport.TransportProviderEvents;
+import io.github.teilabs.meshnet.core.transport.advertising.AdvertisingPayloadCodec;
+import io.github.teilabs.meshnet.core.transport.advertising.BinaryAdvertisingPayloadCodec;
+import io.github.teilabs.meshnet.core.transport.handshake.BinaryHandShakePayloadCodec;
+import io.github.teilabs.meshnet.core.transport.handshake.HandShakePayloadCodec;
 
 /**
  * Main class that provides communication between the daemon and other classes.
@@ -32,6 +43,16 @@ public class MeshCore implements CoreInput {
     private final CryptoProvider cryptoProvider;
 
     private Ed25519KeyPair keyPair;
+
+    private final NodesManager nodesManager;
+
+    private final TransportMessageCodec transportMessageCodec;
+
+    private final HandShakePayloadCodec handShakePayloadCodec;
+
+    private final AdvertisingPayloadCodec advertisingPayloadCodec;
+
+    private final TransportProvider transportProvider;
 
     private final TunnelManager tunnelManager;
 
@@ -49,13 +70,42 @@ public class MeshCore implements CoreInput {
         // Get key pair from storage if it exists or create and store it otherwise
         this.keyPair = (this.coreEvents.getKeyPair() != null) ? this.coreEvents.getKeyPair()
                 : this.coreEvents.saveKeyPair(this.cryptoProvider.generateKeyPair());
-        this.tunnelManager = new HashMapTunnelManager(new TunnelManagerEvents() {
+        this.nodesManager = new HashSetNodesManager();
+        this.transportMessageCodec = new BinaryTransportMessageCodec();
+        this.handShakePayloadCodec = new BinaryHandShakePayloadCodec();
+        this.advertisingPayloadCodec = new BinaryAdvertisingPayloadCodec();
+        this.transportProvider = new DefaultTransportProvider(frameCodec, transportMessageCodec,
+                new TransportProviderEvents() {
+                    @Override
+                    public void sendBytes(byte[] bytes, long nodeRoutingId) {
+                        coreEvents.sendBytes(bytes, nodeRoutingId);
+                    }
 
+                    @Override
+                    public void sendBytesToEveryone(byte[] bytes) {
+                        coreEvents.sendBytesToEveryone(bytes);
+                    }
+
+                    @Override
+                    public void onFrameRecieved(Frame frame) {
+                        frameRouter.onFrameRecieved(frame);
+                    }
+
+                    @Override
+                    public void startAdvertising(byte[] bytes, int intervalMs) {
+                        coreEvents.startAdvertising(bytes, intervalMs);
+                    }
+
+                    @Override
+                    public void stopAdvertising() {
+                        coreEvents.stopAdvertising();
+                    }
+                }, this.keyPair, this.handShakePayloadCodec, this.cryptoProvider, this.advertisingPayloadCodec);
+        this.tunnelManager = new HashMapTunnelManager(new TunnelManagerEvents() {
             @Override
             public boolean checkTunnelOpenAccess(Tunnel tunnel) {
                 return coreEvents.checkTunnelOpenAccess(tunnel);
             }
-
         });
         this.meshMessageCodec = new DefaultMeshMessageCodec(this.cryptoProvider, this.frameCodec, this.keyPair,
                 this.tunnelManager);
@@ -83,17 +133,6 @@ public class MeshCore implements CoreInput {
 
         }, this.frameCodec);
         this.frameRouter = new DefaultFrameRouter(this.keyPair, new FrameRouterEvents() {
-
-            @Override
-            public void sendFrame(Frame frame, long nodeRoutingId) {
-                coreEvents.sendRawFrame(frameCodec.serialize(frame), nodeRoutingId);
-            }
-
-            @Override
-            public void sendFrameToEveryone(Frame frame) {
-                coreEvents.sendRawFrameToEveryone(frameCodec.serialize(frame));
-            }
-
             @Override
             public void transferMessageToApp(MeshIncomingMessage message) {
                 if (message.getDstAppId() == 0) {
@@ -103,19 +142,13 @@ public class MeshCore implements CoreInput {
                 }
                 coreEvents.transferMessageToApp(message);
             }
-
-            @Override
-            public boolean checkConnectionToNode(long nodeRoutingId) {
-                return coreEvents.checkConnectionToNode(nodeRoutingId);
-            }
-
-        }, this.meshMessageCodec, this.cryptoProvider, this.frameCodec, this.tunnelManager, this.frameBuffer);
+        }, this.meshMessageCodec, this.cryptoProvider, this.frameCodec, this.tunnelManager, this.frameBuffer,
+                this.nodesManager, this.transportProvider);
     }
 
     @Override
-    public void onRawFrameRecieved(byte[] rawFrame) {
-        Frame frame = frameCodec.parse(rawFrame);
-        frameRouter.onFrameRecieved(frame);
+    public void onBytesRecieved(byte[] bytes) {
+        transportProvider.onBytesRecieved(bytes);
     }
 
     @Override

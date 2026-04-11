@@ -21,7 +21,7 @@ public record Ed25519KeyPair(byte[] privateKey, byte[] publicKey, long routingId
 
         byte[] privateKey = ((Ed25519PrivateKeyParameters) kp.getPrivate()).getEncoded();
         byte[] publicKey = ((Ed25519PublicKeyParameters) kp.getPublic()).getEncoded();
-        long routingId = ByteBuffer.wrap(publicKey, 0, 8).getLong();;
+        long routingId = ByteBuffer.wrap(publicKey, 0, 8).getLong();
         return new Ed25519KeyPair(privateKey, publicKey, routingId);
     }
 }

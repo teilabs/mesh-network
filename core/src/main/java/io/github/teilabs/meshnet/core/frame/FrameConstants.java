@@ -2,7 +2,7 @@ package io.github.teilabs.meshnet.core.frame;
 
 /** Class with all Frame related constants. */
 public final class FrameConstants {
-    public static final int VERSION = 1;
+    public static final byte VERSION = 1;
 
     // Version 1
     // Sizes

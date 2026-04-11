@@ -9,19 +9,32 @@ import io.github.teilabs.meshnet.core.routing.Tunnel;
  */
 public interface CoreEvents {
     /**
-     * Sends a frame bytes to the specific node.
+     * Sends bytes to the specific node.
      *
-     * @param rawFrame      bytes of frame to send
+     * @param bytes         bytes to send
      * @param nodeRoutingId routingId of node to send
      */
-    void sendRawFrame(byte[] rawFrame, long nodeRoutingId);
+    void sendBytes(byte[] bytes, long nodeRoutingId);
 
     /**
-     * Sends a frame bytes to all connected nodes.
+     * Sends bytes to all connected nodes.
      *
-     * @param rawFrame bytes of frame to send
+     * @param bytes bytes to send
      */
-    void sendRawFrameToEveryone(byte[] rawFrame);
+    void sendBytesToEveryone(byte[] bytes);
+
+    /**
+     * Starts advertising bytes on all available interfaces to connect new nodes.
+     *
+     * @param bytes      bytes to advertise
+     * @param intervalMs interval between advertisement
+     */
+    void startAdvertising(byte[] bytes, int intervalMs);
+
+    /**
+     * Stops advertising bytes.
+     */
+    void stopAdvertising();
 
     /**
      * Gets publick and priavte key from storage.
