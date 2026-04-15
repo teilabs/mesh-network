@@ -1,5 +1,7 @@
 package io.github.teilabs.meshnet.core.api;
 
+import io.github.teilabs.meshnet.core.MeshCore;
+import io.github.teilabs.meshnet.core.frame.Frame;
 import io.github.teilabs.meshnet.core.frame.FrameConstants;
 import java.util.Arrays;
 
@@ -7,7 +9,8 @@ import java.util.Arrays;
  * Repsresents message that will be converted to {@link Frame} and sended to
  * destination device.
  * <br>
- * Client library gives this class to {@link MeshCore} when app initialize message sending.
+ * Client library gives this class to {@link MeshCore} when app initialize
+ * message sending.
  */
 public final class MeshOutgoingMessage {
     /**
@@ -33,7 +36,7 @@ public final class MeshOutgoingMessage {
     private final short srcAppId;
     /**
      * Id of application that will receive this Frame on destination device. Should
-     * be 0 for system frames like open and close tunnel.
+     * be 0 for frames to core.
      */
     private final short dstAppId;
 
@@ -71,20 +74,22 @@ public final class MeshOutgoingMessage {
     private void validateByType() {
         if (type == TYPE_DATA) {
             if (data.length == 0) {
-                throw new IllegalArgumentException("Data frame must have data");
+                throw new IllegalArgumentException(
+                        "Data frame must have data.");
             }
         } else if (type == TYPE_OPEN_TUNNEL) {
-            if (data.length != 0 || dstAppId != 0) {
+            if (data.length != 0) {
                 throw new IllegalArgumentException(
-                        "Open tunnel frame mustn't have encrypted data. dstAppId must equal 0");
+                        "Open tunnel frame mustn't have data.");
             }
         } else if (type == TYPE_DATA_TUNNEL) {
             if (data.length == 0) {
-                throw new IllegalArgumentException("Data tunnel frame must have data");
+                throw new IllegalArgumentException("Data tunnel framemust have data");
             }
         } else if (type == TYPE_CLOSE_TUNNEL) {
-            if (data.length != 0 || dstAppId != 0) {
-                throw new IllegalArgumentException("Close tunnel frame mustn't have data. dstAppId must equal 0");
+            if (data.length != 0) {
+                throw new IllegalArgumentException(
+                        "Close tunnel framemustn't have data.");
             }
         }
     }
@@ -110,24 +115,36 @@ public final class MeshOutgoingMessage {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (!(o instanceof MeshOutgoingMessage meshOutgoingMessage))
-            return false;
-        return srcAppId == meshOutgoingMessage.srcAppId && dstAppId == meshOutgoingMessage.dstAppId
-                && type == meshOutgoingMessage.type
-                && Arrays.equals(dstPubKey, meshOutgoingMessage.dstPubKey)
-                && Arrays.equals(data, meshOutgoingMessage.data);
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + type;
+        result = prime * result + srcAppId;
+        result = prime * result + dstAppId;
+        result = prime * result + Arrays.hashCode(dstPubKey);
+        result = prime * result + Arrays.hashCode(data);
+        return result;
     }
 
     @Override
-    public int hashCode() {
-        int result = srcAppId;
-        result = 31 * result + dstAppId;
-        result = 31 * result + type;
-        result = 31 * result + Arrays.hashCode(dstPubKey);
-        result = 31 * result + Arrays.hashCode(data);
-        return result;
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        MeshOutgoingMessage other = (MeshOutgoingMessage) obj;
+        if (type != other.type)
+            return false;
+        if (srcAppId != other.srcAppId)
+            return false;
+        if (dstAppId != other.dstAppId)
+            return false;
+        if (!Arrays.equals(dstPubKey, other.dstPubKey))
+            return false;
+        if (!Arrays.equals(data, other.data))
+            return false;
+        return true;
     }
 }

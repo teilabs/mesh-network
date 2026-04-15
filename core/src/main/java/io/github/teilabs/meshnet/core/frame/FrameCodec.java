@@ -16,7 +16,7 @@ public interface FrameCodec {
      * Serializes {@link Frame} to bytes.
      * 
      * @param frame Frame to serialize.
-     * @return Serialized frmae bytes.
+     * @return Serialized frame bytes.
      */
     byte[] serialize(Frame frame);
 

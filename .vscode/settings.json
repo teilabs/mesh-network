@@ -12,5 +12,6 @@
     "javax.*",
     "org.*",
     "com.*"
-  ]
+  ],
+  "java.configuration.updateBuildConfiguration": "automatic"
 }

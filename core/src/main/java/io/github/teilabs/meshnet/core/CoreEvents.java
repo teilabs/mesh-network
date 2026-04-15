@@ -92,14 +92,6 @@ public interface CoreEvents {
     void deleteFile(String path);
 
     /**
-     * Checks if node is connected
-     * 
-     * @param nodeRoutingId routing id of node to check
-     * @return true - if node is connecte, false - otherwise
-     */
-    boolean checkConnectionToNode(long nodeRoutingId);
-
-    /**
      * Asks user to open the tunnel.
      * 
      * @param tunnel tunnel that we want to open

@@ -19,6 +19,7 @@ public final class HandShakePayload {
         validateFields();
     }
 
+    /** Validates fields values. */
     private void validateFields() {
         if (srcPubKey.length != FrameConstants.PUBLICK_KEY_SIZE_v1) {
             throw new IllegalArgumentException(
@@ -39,18 +40,27 @@ public final class HandShakePayload {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (!(o instanceof HandShakePayload that))
-            return false;
-        return Arrays.equals(srcPubKey, that.srcPubKey) && Arrays.equals(signature, that.signature);
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + Arrays.hashCode(srcPubKey);
+        result = prime * result + Arrays.hashCode(signature);
+        return result;
     }
 
     @Override
-    public int hashCode() {
-        int r = Arrays.hashCode(srcPubKey);
-        r = 31 * r + Arrays.hashCode(signature);
-        return r;
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        HandShakePayload other = (HandShakePayload) obj;
+        if (!Arrays.equals(srcPubKey, other.srcPubKey))
+            return false;
+        if (!Arrays.equals(signature, other.signature))
+            return false;
+        return true;
     }
 }

@@ -11,7 +11,7 @@ public interface FrameRouter {
      * 
      * @param frame incoming frame
      */
-    void onFrameRecieved(Frame frame);
+    void onFrameReceived(Frame frame, long prevNodeRoutingId);
 
     /**
      * Sends a {@link Frame frame}.

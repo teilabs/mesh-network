@@ -64,23 +64,36 @@ public final class MeshIncomingMessage {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (!(o instanceof MeshIncomingMessage meshIncomingMessage))
-            return false;
-        return srcAppId == meshIncomingMessage.srcAppId
-                && timestamp == meshIncomingMessage.timestamp
-                && Arrays.equals(srcPubKey, meshIncomingMessage.srcPubKey)
-                && Arrays.equals(data, meshIncomingMessage.data);
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + timestamp;
+        result = prime * result + srcAppId;
+        result = prime * result + dstAppId;
+        result = prime * result + Arrays.hashCode(srcPubKey);
+        result = prime * result + Arrays.hashCode(data);
+        return result;
     }
 
     @Override
-    public int hashCode() {
-        int result = srcAppId;
-        result = 31 * result + timestamp;
-        result = 31 * result + Arrays.hashCode(srcPubKey);
-        result = 31 * result + Arrays.hashCode(data);
-        return result;
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        MeshIncomingMessage other = (MeshIncomingMessage) obj;
+        if (timestamp != other.timestamp)
+            return false;
+        if (srcAppId != other.srcAppId)
+            return false;
+        if (dstAppId != other.dstAppId)
+            return false;
+        if (!Arrays.equals(srcPubKey, other.srcPubKey))
+            return false;
+        if (!Arrays.equals(data, other.data))
+            return false;
+        return true;
     }
 }

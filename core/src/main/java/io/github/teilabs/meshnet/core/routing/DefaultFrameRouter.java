@@ -1,8 +1,8 @@
 package io.github.teilabs.meshnet.core.routing;
 
-import io.github.teilabs.meshnet.core.api.DefaultMeshMessageCodec;
 import io.github.teilabs.meshnet.core.api.MeshIncomingMessage;
 import io.github.teilabs.meshnet.core.api.MeshMessageCodec;
+import io.github.teilabs.meshnet.core.api.MeshOutgoingMessage;
 import io.github.teilabs.meshnet.core.buffer.FrameBuffer;
 import io.github.teilabs.meshnet.core.crypto.CryptoProvider;
 import io.github.teilabs.meshnet.core.crypto.Ed25519KeyPair;
@@ -10,6 +10,10 @@ import io.github.teilabs.meshnet.core.frame.Frame;
 import io.github.teilabs.meshnet.core.frame.FrameCodec;
 import io.github.teilabs.meshnet.core.transport.NodesManager;
 import io.github.teilabs.meshnet.core.transport.TransportProvider;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+import kotlin.Pair;
 
 public class DefaultFrameRouter implements FrameRouter {
     private Ed25519KeyPair keyPair;
@@ -20,73 +24,194 @@ public class DefaultFrameRouter implements FrameRouter {
 
     private final FrameBuffer frameBuffer;
 
-    private final TransportProvider  transportProvider;
+    private final TransportProvider transportProvider;
 
     private final NodesManager nodesManager;
 
+    private final TunnelManager tunnelManager;
+
     public DefaultFrameRouter(Ed25519KeyPair keyPair, FrameRouterEvents frameRouterEvents,
             MeshMessageCodec meshMessageCodec, CryptoProvider cryptoProvider, FrameCodec frameCodec,
-            TunnelManager tunnelManager, FrameBuffer frameBuffer, NodesManager nodesManager, TransportProvider transportProvider) {
+            TunnelManager tunnelManager, FrameBuffer frameBuffer, NodesManager nodesManager,
+            TransportProvider transportProvider, TunnelManager tunnelManager2) {
         this.keyPair = keyPair;
         this.frameRouterEvents = frameRouterEvents;
         this.frameBuffer = frameBuffer;
-        this.meshMessageCodec = new DefaultMeshMessageCodec(cryptoProvider, frameCodec, keyPair, tunnelManager);
+        this.meshMessageCodec = meshMessageCodec;
         this.transportProvider = transportProvider;
         this.nodesManager = nodesManager;
+        this.tunnelManager = tunnelManager2;
     }
 
     @Override
-    public void onFrameRecieved(Frame frame) {
-        if (frame.getDstRoutingId() == keyPair.routingId()) {
-            MeshIncomingMessage message = meshMessageCodec.parseIncomingFrame(frame);
-            frameRouterEvents.transferMessageToApp(message);
-        } else {
-            switch (frame.getType()) {
-                case 0: {
-                    // Checking that we aren't already distributing this frame
-                    if (!frameBuffer.containsFrame(frame)) {
-                        // If we have connection to destination node we should immediatle send frame to
-                        // it without storing and redistributing
-                        if (nodesManager.checkConnectionToNode(frame.getDstRoutingId())) {
-                            transportProvider.sendFrame(frame, frame.getDstRoutingId());
-                            break;
+    public void onFrameReceived(Frame frame, long prevNodeRoutingId) {
+        switch (frame.getType()) {
+            case 0: {
+                if (frame.getDstRoutingId() == keyPair.routingId()) {
+                    MeshIncomingMessage message = meshMessageCodec.parseIncomingFrame(frame);
+                    frameRouterEvents.transferMessageToApp(message);
+                    break;
+                }
+
+                // Checking that we aren't already distributing this frame
+                if (!frameBuffer.containsFrame(frame)) {
+                    // If we have connection to destination node we should immediatle send frame to
+                    // it without storing and redistributing
+                    if (nodesManager.checkConnectionToNode(frame.getDstRoutingId())) {
+                        transportProvider.sendFrame(frame, frame.getDstRoutingId());
+                        break;
+                    }
+                    frameBuffer.addFrame(frame);
+                    transportProvider.sendFrameToEveryone(frame);
+                }
+                break;
+            }
+            case 1: {
+                if (frame.getDstRoutingId() == keyPair.routingId()) {
+                    long srcRoutingId = Ed25519KeyPair.generateRoutingId(frame.getSrcPubKey());
+                    long dstRoutingId = frame.getDstRoutingId();
+
+                    short endpoint1AppId = frame.getSrcAppId();
+                    short endpoint2AppId = frame.getDstAppId();
+                    if (srcRoutingId >= dstRoutingId) {
+                        endpoint1AppId = frame.getDstAppId();
+                        endpoint2AppId = frame.getSrcAppId();
+                    }
+
+                    Set<Pair<Short, Short>> appIds = Collections.synchronizedSet(new HashSet<>());
+                    appIds.add(new Pair<Short, Short>(endpoint1AppId, endpoint2AppId));
+
+                    Tunnel tunnel = new Tunnel(Math.min(srcRoutingId, dstRoutingId),
+                            Math.max(srcRoutingId, dstRoutingId), prevNodeRoutingId,
+                            prevNodeRoutingId, appIds);
+                    try {
+                        tunnelManager.addTunnel(tunnel);
+                        if (tunnelManager.containsPendingTunnel(Tunnel.generateTunnelId(srcRoutingId, dstRoutingId),
+                                endpoint1AppId, endpoint2AppId)) {
+                            tunnelManager.removePendingTunnel(tunnel);
+                        } else {
+                            MeshOutgoingMessage message = new MeshOutgoingMessage(MeshOutgoingMessage.TYPE_OPEN_TUNNEL,
+                                    frame.getDstAppId(), frame.getSrcAppId(), frame.getSrcPubKey(), new byte[0]);
+                            transportProvider.sendFrame(meshMessageCodec.generateOutgoingFrame(message),
+                                    prevNodeRoutingId);
                         }
-                        frameBuffer.addFrame(frame);
+                    } catch (RuntimeException e) {
+                        if (tunnelManager.containsPendingTunnel(Tunnel.generateTunnelId(srcRoutingId, dstRoutingId),
+                                endpoint1AppId, endpoint2AppId)) {
+                            tunnelManager.removePendingTunnel(tunnel);
+                        }
+
+                        MeshOutgoingMessage message = new MeshOutgoingMessage(MeshOutgoingMessage.TYPE_CLOSE_TUNNEL,
+                                frame.getDstAppId(), frame.getSrcAppId(), frame.getSrcPubKey(), new byte[0]);
+                        transportProvider.sendFrame(meshMessageCodec.generateOutgoingFrame(message),
+                                prevNodeRoutingId);
+                    }
+                } else {
+                    long srcRoutingId = Ed25519KeyPair.generateRoutingId(frame.getSrcPubKey());
+                    long dstRoutingId = frame.getDstRoutingId();
+
+                    short endpoint1AppId = frame.getSrcAppId();
+                    short endpoint2AppId = frame.getDstAppId();
+                    if (srcRoutingId >= dstRoutingId) {
+                        endpoint1AppId = frame.getDstAppId();
+                        endpoint2AppId = frame.getSrcAppId();
+                    }
+
+                    long tunnelId = Tunnel.generateTunnelId(srcRoutingId, dstRoutingId);
+                    if (tunnelManager.containsTunnel(tunnelId, endpoint1AppId, endpoint2AppId)) {
+                        Tunnel tunnel = tunnelManager.getTunnel(tunnelId);
+                        tunnelManager.removeTunnel(tunnel);
+
+                        Set<Pair<Short, Short>> appIds = tunnel.getAppIds();
+                        appIds.add(new Pair<Short, Short>(endpoint1AppId, endpoint2AppId));
+
+                        tunnelManager.addTunnel(new Tunnel(Math.min(srcRoutingId, dstRoutingId),
+                                Math.max(srcRoutingId, dstRoutingId),
+                                tunnel.getPrevRoutingId(), prevNodeRoutingId, appIds));
+
+                        transportProvider.sendFrame(frame, tunnel.getPrevRoutingId());
+                    } else {
+                        Set<Pair<Short, Short>> appIds = Collections.synchronizedSet(new HashSet<>());
+                        appIds.add(new Pair<Short, Short>(endpoint1AppId, endpoint2AppId));
+
+                        tunnelManager.addTunnel(new Tunnel(Math.min(srcRoutingId, dstRoutingId),
+                                Math.max(srcRoutingId, dstRoutingId),
+                                prevNodeRoutingId, 0, appIds));
+
                         transportProvider.sendFrameToEveryone(frame);
                     }
-                    break;
                 }
-                case 1: {
-                    // Updating frame path by adding this node routing id
-                    long[] path = new long[frame.getPath().length + 1];
-                    for (int i = 0; i < frame.getPath().length; i++) {
-                        path[i] = frame.getPath()[i];
-                    }
-                    path[frame.getPath().length] = keyPair.routingId();
 
-                    transportProvider.sendFrameToEveryone(
-                            new Frame(frame.getVersion(), frame.getType(), frame.getTimestamp(), frame.getSrcAppId(),
-                                    frame.getDstAppId(), frame.getSrcPubKey(), frame.getDstRoutingId(),
-                                    frame.getNonce(), frame.getSignature(), path, frame.getPathPosition(),
-                                    frame.getEncryptedData()));
-                    break;
+                break;
+            }
+            case 2: {
+                if (frame.getDstRoutingId() == keyPair.routingId()) {
+                    // TODO: validate message that it is truly belongs to this tunnel and have
+                    // access to use it
+                    frameRouterEvents.transferMessageToApp(meshMessageCodec.parseIncomingFrame(frame));
+                    // TODO: maybe send ack
+                } else {
+                    Tunnel tunnel = tunnelManager.getTunnel(frame.getTunnelId());
+                    // TODO: validate message that it is truly belongs to this tunnel and have
+                    // access to use it
+
+                    long nextRoutingId = tunnel.getNextRoutingId() != prevNodeRoutingId ? tunnel.getNextRoutingId()
+                            : tunnel.getPrevRoutingId();
+                    transportProvider.sendFrame(frame, nextRoutingId);
                 }
-                case 2, 3: {
-                    // Chacking that pathPosition is correct
-                    // If it isn't it means that we aren't correct redistributor for this frame and
-                    // we can just skip it
-                    if (frame.getPath()[frame.getPathPosition()] == keyPair.routingId()) {
-                        transportProvider.sendFrame(new Frame(frame.getVersion(), frame.getType(), frame.getTimestamp(),
-                                frame.getSrcAppId(),
-                                frame.getDstAppId(), frame.getSrcPubKey(), frame.getDstRoutingId(),
-                                frame.getNonce(), frame.getSignature(), frame.getPath(),
-                                (short) (frame.getPathPosition() + 1),
-                                frame.getEncryptedData()), frame.getPath()[frame.getPathPosition() + 1]);
-                    } else {
-                        throw new RuntimeException("Can't find routingId in path.");
+                break;
+            }
+            case 3: {
+                if (frame.getDstRoutingId() == keyPair.routingId()) {
+                    Tunnel tunnel = tunnelManager.getTunnel(frame.getTunnelId());
+                    // TODO: validate message that it is truly belongs to this tunnel and have
+                    // access to use it
+
+                    long srcRoutingId = Ed25519KeyPair.generateRoutingId(frame.getSrcPubKey());
+                    long dstRoutingId = frame.getDstRoutingId();
+
+                    short endpoint1AppId = frame.getSrcAppId();
+                    short endpoint2AppId = frame.getDstAppId();
+                    if (srcRoutingId >= dstRoutingId) {
+                        endpoint1AppId = frame.getDstAppId();
+                        endpoint2AppId = frame.getSrcAppId();
                     }
-                    break;
+
+                    Set<Pair<Short, Short>> appIds = Collections.synchronizedSet(new HashSet<>());
+                    appIds.add(new Pair<Short, Short>(endpoint1AppId, endpoint2AppId));
+
+                    tunnelManager
+                            .removeTunnel(new Tunnel(tunnel.getEndpoint1RoutingId(), tunnel.getEndpoint2RoutingId(),
+                                    tunnel.getPrevRoutingId(), tunnel.getNextRoutingId(), appIds));
+
+                    // TODO: maybe notify app
+                } else {
+                    Tunnel tunnel = tunnelManager.getTunnel(frame.getTunnelId());
+                    // TODO: validate message that it is truly belongs to this tunnel and have
+                    // access to use it
+
+                    long srcRoutingId = Ed25519KeyPair.generateRoutingId(frame.getSrcPubKey());
+                    long dstRoutingId = frame.getDstRoutingId();
+
+                    short endpoint1AppId = frame.getSrcAppId();
+                    short endpoint2AppId = frame.getDstAppId();
+                    if (srcRoutingId >= dstRoutingId) {
+                        endpoint1AppId = frame.getDstAppId();
+                        endpoint2AppId = frame.getSrcAppId();
+                    }
+
+                    Set<Pair<Short, Short>> appIds = Collections.synchronizedSet(new HashSet<>());
+                    appIds.add(new Pair<Short, Short>(endpoint1AppId, endpoint2AppId));
+
+                    tunnelManager
+                            .removeTunnel(new Tunnel(tunnel.getEndpoint1RoutingId(), tunnel.getEndpoint2RoutingId(),
+                                    tunnel.getPrevRoutingId(), tunnel.getNextRoutingId(), appIds));
+
+                    long nextRoutingId = tunnel.getNextRoutingId() != prevNodeRoutingId ? tunnel.getNextRoutingId()
+                            : tunnel.getPrevRoutingId();
+                    transportProvider.sendFrame(frame, nextRoutingId);
                 }
+                break;
             }
         }
     }
@@ -109,11 +234,56 @@ public class DefaultFrameRouter implements FrameRouter {
                 break;
             }
             case 1: {
+                long srcRoutingId = keyPair.routingId();
+                long dstRoutingId = frame.getDstRoutingId();
+
+                short endpoint1AppId = frame.getSrcAppId();
+                short endpoint2AppId = frame.getDstAppId();
+                if (srcRoutingId >= dstRoutingId) {
+                    endpoint1AppId = frame.getDstAppId();
+                    endpoint2AppId = frame.getSrcAppId();
+                }
+
+                Set<Pair<Short, Short>> appIds = Collections.synchronizedSet(new HashSet<>());
+                appIds.add(new Pair<Short, Short>(endpoint1AppId, endpoint2AppId));
+
+                Tunnel tunnel = new Tunnel(Math.min(srcRoutingId, dstRoutingId),
+                        Math.max(srcRoutingId, dstRoutingId), 0, 0, appIds);
+                tunnelManager.addPendingTunnel(tunnel);
+
                 transportProvider.sendFrameToEveryone(frame);
                 break;
             }
-            case 2, 3: {
-                transportProvider.sendFrame(frame, frame.getPath()[1]);
+            case 2: {
+                Tunnel tunnel = tunnelManager.getTunnel(frame.getTunnelId());
+                // TODO: validate message that it is truly belongs to this tunnel and have
+                // access to use it
+
+                transportProvider.sendFrame(frame, tunnel.getNextRoutingId());
+                break;
+            }
+            case 3: {
+                Tunnel tunnel = tunnelManager.getTunnel(frame.getTunnelId());
+                // TODO: validate message that it is truly belongs to this tunnel and have
+                // access to use it
+
+                long srcRoutingId = keyPair.routingId();
+                long dstRoutingId = frame.getDstRoutingId();
+
+                short endpoint1AppId = frame.getSrcAppId();
+                short endpoint2AppId = frame.getDstAppId();
+                if (srcRoutingId >= dstRoutingId) {
+                    endpoint1AppId = frame.getDstAppId();
+                    endpoint2AppId = frame.getSrcAppId();
+                }
+
+                Set<Pair<Short, Short>> appIds = Collections.synchronizedSet(new HashSet<>());
+                appIds.add(new Pair<Short, Short>(endpoint1AppId, endpoint2AppId));
+
+                tunnelManager.removeTunnel(new Tunnel(tunnel.getEndpoint1RoutingId(), tunnel.getEndpoint2RoutingId(),
+                        tunnel.getPrevRoutingId(), tunnel.getNextRoutingId(), appIds));
+
+                transportProvider.sendFrame(frame, tunnel.getNextRoutingId());
                 break;
             }
         }

@@ -20,14 +20,9 @@ public class BinaryFrameCodec implements FrameCodec {
                 long dstRoutingId = buffer.getLong();
                 byte[] nonce = new byte[FrameConstants.NONCE_SIZE_v1];
                 buffer.get(nonce);
+                long tunnelId = buffer.getLong();
                 byte[] signature = new byte[FrameConstants.SIGNATURE_SIZE_v1];
                 buffer.get(signature);
-                short pathLenght = buffer.getShort();
-                long[] path = new long[pathLenght];
-                for (int i = 0; i < pathLenght; i++) {
-                    path[i] = buffer.getLong();
-                }
-                short pathPosition = buffer.getShort();
                 byte[] encryptedData = new byte[buffer.remaining()];
 
                 return new Frame(
@@ -39,9 +34,8 @@ public class BinaryFrameCodec implements FrameCodec {
                         srcPubKey,
                         dstRoutingId,
                         nonce,
+                        tunnelId,
                         signature,
-                        path,
-                        pathPosition,
                         encryptedData);
             }
             default:
@@ -55,7 +49,7 @@ public class BinaryFrameCodec implements FrameCodec {
         switch (frame.getVersion()) {
             case 1: {
                 ByteBuffer buffer = ByteBuffer
-                        .allocate(FrameConstants.HEADER_SIZE_v1 + FrameConstants.SIGNATURE_SIZE_v1 + 8 * frame.getPath().length + 2
+                        .allocate(FrameConstants.HEADER_SIZE_v1 + FrameConstants.SIGNATURE_SIZE_v1
                                 + frame.getEncryptedData().length);
 
                 buffer
@@ -67,13 +61,9 @@ public class BinaryFrameCodec implements FrameCodec {
                         .put(frame.getSrcPubKey())
                         .putLong(frame.getDstRoutingId())
                         .put(frame.getNonce())
+                        .putLong(frame.getTunnelId())
                         .put(frame.getSignature())
-                        .putShort((short) frame.getPath().length);
-                for (long l : frame.getPath()) {
-                    buffer.putLong(l);
-                }
-                buffer.putShort(frame.getPathPosition());
-                buffer.put(frame.getEncryptedData());
+                        .put(frame.getEncryptedData());
 
                 return buffer.array();
             }
@@ -98,7 +88,8 @@ public class BinaryFrameCodec implements FrameCodec {
                         .putShort(frame.getDstAppId())
                         .put(frame.getSrcPubKey())
                         .putLong(frame.getDstRoutingId())
-                        .put(frame.getNonce());
+                        .put(frame.getNonce())
+                        .putLong(frame.getTunnelId());
 
                 return buffer.array();
             }

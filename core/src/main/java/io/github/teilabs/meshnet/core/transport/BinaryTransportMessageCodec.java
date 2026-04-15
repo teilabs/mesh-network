@@ -3,10 +3,9 @@ package io.github.teilabs.meshnet.core.transport;
 import java.nio.ByteBuffer;
 
 public class BinaryTransportMessageCodec implements TransportMessageCodec {
-
     @Override
     public byte[] serialize(TransportMessage message) {
-
+        // serializing transport message according to version
         switch (message.getVersion()) {
             case 1: {
                 ByteBuffer buffer = ByteBuffer
@@ -15,6 +14,7 @@ public class BinaryTransportMessageCodec implements TransportMessageCodec {
                 buffer
                         .put(message.getVersion())
                         .put(message.getType())
+                        .putLong(message.getSenderRoutingId())
                         .putLong(message.getTargetRoutingId())
                         .put(message.getPayload());
 
@@ -30,16 +30,18 @@ public class BinaryTransportMessageCodec implements TransportMessageCodec {
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
 
         byte version = buffer.get();
-        // parsing frame according to version
+        // parsing transport message according to version
         switch (version) {
             case 1: {
                 byte type = buffer.get();
+                long senderRoutingId = buffer.getLong();
                 long targetRoutingId = buffer.getLong();
                 byte[] payload = new byte[buffer.remaining()];
 
                 return new TransportMessage(
                         version,
                         type,
+                        senderRoutingId,
                         targetRoutingId,
                         payload);
             }

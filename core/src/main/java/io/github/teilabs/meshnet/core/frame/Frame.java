@@ -1,5 +1,6 @@
 package io.github.teilabs.meshnet.core.frame;
 
+import io.github.teilabs.meshnet.core.crypto.Ed25519KeyPair;
 import java.util.Arrays;
 
 /**
@@ -12,17 +13,17 @@ public final class Frame {
      */
     public static final byte TYPE_DATA = 0;
     /**
-     * Frame witout any data except path. This frame is used to open tunnel (usually
+     * Frame witout any data. This frame is used to open tunnel (usually
      * shortest ordered way that connects two devices through other nodes without
      * self intersections).
      */
     public static final byte TYPE_OPEN_TUNNEL = 1;
     /**
-     * Frame with data and path. This frame is used to send data using already
+     * This frame is used to send data using already
      * opened tunnel.
      */
     public static final byte TYPE_DATA_TUNNEL = 2;
-    /** Frame without any data except path. This frame is used to close tunnel. */
+    /** Frame without any data. This frame is used to close tunnel. */
     public static final byte TYPE_CLOSE_TUNNEL = 3;
 
     /** Version of protocol used in this Frame. */
@@ -38,19 +39,22 @@ public final class Frame {
     private final short srcAppId;
     /**
      * Id of application that will receive this Frame on destination device. Should
-     * be 0 for system frames like open and close tunnel.
+     * be 0 for frames to core.
      */
     private final short dstAppId;
 
     /** Ed25519 public key of source device. */
     private final byte[] srcPubKey;
     /**
-     * Routing Id (just first 8 bytes of Ed25519 publick key) of destination device.
+     * Routing Id (see {@link Ed25519KeyPair#generateRoutingId}) of destination device.
      */
     private final long dstRoutingId;
 
     /** 12 byte nonce used for encrypting this Frame data. */
     private final byte[] nonce;
+
+    /** Id of tunnel that this Frame is using. */
+    private long tunnelId;
 
     /**
      * Ed25519 signature of this Frame header (part of frame, see
@@ -58,30 +62,15 @@ public final class Frame {
      */
     private final byte[] signature;
 
-    /**
-     * Ordered array of routing Ids (just first 8 bytes of Ed25519 publick key) of
-     * devices that passed this Frame. Is not empty only if this Frame has tunnel
-     * related type.
-     */
-    private final long[] path;
-
-    /**
-     * Position in path of node which received te frame. Is 0 if path is empty or if frame type is 1.
-     * <br>
-     * When you recieve frame with ype 2 or 3, pathPosition is position of your node
-     * in path, so that means that you can just send messge to node on pathPosition
-     * + 1.
-     */
-    private final short pathPosition;
-
     /** Frame body encrypted with AEAD (use header for aad and nonce for nonce). */
     private final byte[] encryptedData;
 
     public Frame(byte version, byte type, int timestamp, short srcAppId, short dstAppId, byte[] srcPubKey,
             long dstRoutingId,
             byte[] nonce,
+            long tunnelId,
             byte[] signature,
-            long[] path, short pathPosition, byte[] encryptedData) {
+            byte[] encryptedData) {
         this.version = version;
         this.type = type;
         this.timestamp = timestamp;
@@ -90,9 +79,8 @@ public final class Frame {
         this.srcPubKey = (srcPubKey != null) ? srcPubKey.clone() : new byte[0];
         this.dstRoutingId = dstRoutingId;
         this.nonce = nonce;
+        this.tunnelId = tunnelId;
         this.signature = (signature != null) ? signature.clone() : new byte[0];
-        this.path = (path != null) ? path.clone() : new long[0];
-        this.pathPosition = pathPosition;
         this.encryptedData = (encryptedData != null) ? encryptedData.clone() : new byte[0];
 
         validateFields();
@@ -124,23 +112,23 @@ public final class Frame {
     /** Validates type related fields. */
     private void validateByType() {
         if (type == TYPE_DATA) {
-            if (path.length != 0 || encryptedData.length == 0 || pathPosition != 0) {
+            if (encryptedData.length == 0 || tunnelId != 0) {
                 throw new IllegalArgumentException(
-                        "Data frame mustn't have path and must have encrypted data. pathPosition must equal 0");
+                        "Data frame must have encrypted data. tunnelId must equal 0");
             }
         } else if (type == TYPE_OPEN_TUNNEL) {
-            if (path.length == 0 || encryptedData.length != 0 || dstAppId != 0) {
+            if (encryptedData.length != 0) {
                 throw new IllegalArgumentException(
-                        "Open tunnel frame must have path and mustn't have encrypted data. dstAppId must equal 0");
+                        "Open tunnel frame mustn't have encrypted data.");
             }
         } else if (type == TYPE_DATA_TUNNEL) {
-            if (path.length == 0 || encryptedData.length == 0) {
-                throw new IllegalArgumentException("Data tunnel frame must have path and must have encrypted data");
+            if (encryptedData.length == 0) {
+                throw new IllegalArgumentException("Data tunnel framemust have encrypted data");
             }
         } else if (type == TYPE_CLOSE_TUNNEL) {
-            if (path.length == 0 || encryptedData.length != 0 || dstAppId != 0) {
+            if (encryptedData.length != 0) {
                 throw new IllegalArgumentException(
-                        "Close tunnel frame must have path and mustn't have encrypted data. dstAppId must equal 0");
+                        "Close tunnel framemustn't have encrypted data.");
             }
         }
     }
@@ -177,16 +165,12 @@ public final class Frame {
         return nonce.clone();
     }
 
+    public long getTunnelId() {
+        return tunnelId;
+    }
+
     public byte[] getSignature() {
         return signature.clone();
-    }
-
-    public long[] getPath() {
-        return path.clone();
-    }
-
-    public short getPathPosition() {
-        return pathPosition;
     }
 
     public byte[] getEncryptedData() {
@@ -194,34 +178,54 @@ public final class Frame {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o)
-            return true;
-        if (!(o instanceof Frame frame))
-            return false;
-        return version == frame.version && type == frame.type && srcAppId == frame.srcAppId
-                && dstAppId == frame.dstAppId
-                && timestamp == frame.timestamp && dstRoutingId == frame.dstRoutingId
-                && Arrays.equals(srcPubKey, frame.srcPubKey)
-                && Arrays.equals(signature, frame.signature)
-                && Arrays.equals(path, frame.path)
-                && pathPosition == frame.pathPosition
-                && Arrays.equals(encryptedData, frame.encryptedData);
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + version;
+        result = prime * result + type;
+        result = prime * result + timestamp;
+        result = prime * result + srcAppId;
+        result = prime * result + dstAppId;
+        result = prime * result + Arrays.hashCode(srcPubKey);
+        result = prime * result + (int) (dstRoutingId ^ (dstRoutingId >>> 32));
+        result = prime * result + Arrays.hashCode(nonce);
+        result = prime * result + (int) (tunnelId ^ (tunnelId >>> 32));
+        result = prime * result + Arrays.hashCode(signature);
+        result = prime * result + Arrays.hashCode(encryptedData);
+        return result;
     }
 
     @Override
-    public int hashCode() {
-        int result = version;
-        result = 31 * result + type;
-        result = 31 * result + srcAppId;
-        result = 31 * result + dstAppId;
-        result = 31 * result + timestamp;
-        result = 31 * result + Long.hashCode(dstRoutingId);
-        result = 31 * result + Arrays.hashCode(srcPubKey);
-        result = 31 * result + Arrays.hashCode(signature);
-        result = 31 * result + Arrays.hashCode(path);
-        result = 31 * result + pathPosition;
-        result = 31 * result + Arrays.hashCode(encryptedData);
-        return result;
+    public boolean equals(Object obj) {
+        if (this == obj)
+            return true;
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        Frame other = (Frame) obj;
+        if (version != other.version)
+            return false;
+        if (type != other.type)
+            return false;
+        if (timestamp != other.timestamp)
+            return false;
+        if (srcAppId != other.srcAppId)
+            return false;
+        if (dstAppId != other.dstAppId)
+            return false;
+        if (!Arrays.equals(srcPubKey, other.srcPubKey))
+            return false;
+        if (dstRoutingId != other.dstRoutingId)
+            return false;
+        if (!Arrays.equals(nonce, other.nonce))
+            return false;
+        if (tunnelId != other.tunnelId)
+            return false;
+        if (!Arrays.equals(signature, other.signature))
+            return false;
+        if (!Arrays.equals(encryptedData, other.encryptedData))
+            return false;
+        return true;
     }
 }

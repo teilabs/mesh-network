@@ -87,8 +87,8 @@ public class MeshCore implements CoreInput {
                     }
 
                     @Override
-                    public void onFrameRecieved(Frame frame) {
-                        frameRouter.onFrameRecieved(frame);
+                    public void onFrameReceived(Frame frame, long prevNodeRoutingId) {
+                        frameRouter.onFrameReceived(frame, prevNodeRoutingId);
                     }
 
                     @Override
@@ -100,15 +100,14 @@ public class MeshCore implements CoreInput {
                     public void stopAdvertising() {
                         coreEvents.stopAdvertising();
                     }
-                }, this.keyPair, this.handShakePayloadCodec, this.cryptoProvider, this.advertisingPayloadCodec);
+                }, this.keyPair, this.handShakePayloadCodec, this.cryptoProvider, this.advertisingPayloadCodec, this.nodesManager);
         this.tunnelManager = new HashMapTunnelManager(new TunnelManagerEvents() {
             @Override
             public boolean checkTunnelOpenAccess(Tunnel tunnel) {
                 return coreEvents.checkTunnelOpenAccess(tunnel);
             }
-        });
-        this.meshMessageCodec = new DefaultMeshMessageCodec(this.cryptoProvider, this.frameCodec, this.keyPair,
-                this.tunnelManager);
+        }, this.keyPair);
+        this.meshMessageCodec = new DefaultMeshMessageCodec(this.cryptoProvider, this.frameCodec, this.keyPair);
         this.frameBuffer = new PersistentFrameBuffer(new FrameBufferEvents() {
 
             @Override
@@ -137,18 +136,17 @@ public class MeshCore implements CoreInput {
             public void transferMessageToApp(MeshIncomingMessage message) {
                 if (message.getDstAppId() == 0) {
                     // TODO: proccess it by core
-                    // If type == 1 add this node to the end of the path
                     return;
                 }
                 coreEvents.transferMessageToApp(message);
             }
         }, this.meshMessageCodec, this.cryptoProvider, this.frameCodec, this.tunnelManager, this.frameBuffer,
-                this.nodesManager, this.transportProvider);
+                this.nodesManager, this.transportProvider, this.tunnelManager);
     }
 
     @Override
-    public void onBytesRecieved(byte[] bytes) {
-        transportProvider.onBytesRecieved(bytes);
+    public void onBytesReceived(byte[] bytes) {
+        transportProvider.onBytesReceived(bytes);
     }
 
     @Override

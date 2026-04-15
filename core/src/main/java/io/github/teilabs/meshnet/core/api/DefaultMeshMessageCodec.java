@@ -5,8 +5,7 @@ import io.github.teilabs.meshnet.core.crypto.Ed25519KeyPair;
 import io.github.teilabs.meshnet.core.frame.Frame;
 import io.github.teilabs.meshnet.core.frame.FrameCodec;
 import io.github.teilabs.meshnet.core.frame.FrameConstants;
-import io.github.teilabs.meshnet.core.routing.TunnelManager;
-import java.nio.ByteBuffer;
+import io.github.teilabs.meshnet.core.routing.Tunnel;
 
 public final class DefaultMeshMessageCodec implements MeshMessageCodec {
     private final CryptoProvider cryptoProvider;
@@ -15,14 +14,10 @@ public final class DefaultMeshMessageCodec implements MeshMessageCodec {
 
     private Ed25519KeyPair keyPair;
 
-    private final TunnelManager tunnelManager;
-
-    public DefaultMeshMessageCodec(CryptoProvider cryptoProvider, FrameCodec frameCodec, Ed25519KeyPair keyPair,
-            TunnelManager tunnelManager) {
+    public DefaultMeshMessageCodec(CryptoProvider cryptoProvider, FrameCodec frameCodec, Ed25519KeyPair keyPair) {
         this.cryptoProvider = cryptoProvider;
         this.frameCodec = frameCodec;
         this.keyPair = keyPair;
-        this.tunnelManager = tunnelManager;
     }
 
     @Override
@@ -45,30 +40,26 @@ public final class DefaultMeshMessageCodec implements MeshMessageCodec {
         short srcAppId = message.getSrcAppId();
         short dstAppId = message.getDstAppId();
         byte[] srcPubKey = keyPair.publicKey();
-        long dstRoutingId = ByteBuffer.wrap(message.getDstPubKey(), 0, 8).getLong();
+        long dstRoutingId = Ed25519KeyPair.generateRoutingId(message.getDstPubKey());
         byte[] nonce = cryptoProvider.generateNonce();
+        long tunnelId = 0;
+
+        if (type == 1 || type == 2 || type == 3) {
+            tunnelId = Tunnel.generateTunnelId(Ed25519KeyPair.generateRoutingId(srcPubKey), dstRoutingId);
+        }
 
         // Serialize header fields for future usage
         byte[] serializedHeader = frameCodec.serializeHeader(new Frame(version, type, timestamp, srcAppId,
-                dstAppId, srcPubKey, dstRoutingId, nonce, new byte[0], new long[0], (short) 0, new byte[0]));
+                dstAppId, srcPubKey, dstRoutingId, nonce, tunnelId, new byte[0], new byte[0]));
 
         // Signing frame header for author proving on destination node
         byte[] signature = cryptoProvider.sign(serializedHeader,
                 keyPair.privateKey());
-        long[] path = new long[0];
-        if (type == 1) {
-            path = new long[1];
-            path[0] = keyPair.routingId();
-        }
-        if (type == 2 || type == 3) {
-            path = tunnelManager.getTunnel(dstRoutingId).getPath();
-        }
         byte[] encryptedData = cryptoProvider.encrypt(message.getDstPubKey(), nonce, serializedHeader,
                 message.getdata());
 
         return new Frame(
-                version, type, timestamp, srcAppId, dstAppId, srcPubKey, dstRoutingId, nonce, signature, path,
-                (short) 1,
+                version, type, timestamp, srcAppId, dstAppId, srcPubKey, dstRoutingId, nonce, tunnelId, signature,
                 encryptedData);
     }
 }
