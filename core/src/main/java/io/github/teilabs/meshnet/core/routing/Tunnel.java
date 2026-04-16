@@ -8,7 +8,7 @@ import kotlin.Pair;
 import org.bouncycastle.util.Arrays;
 
 /**
- * Class for storing info about tunel betewen two nodes.
+ * Class for storing info about tunтel between two nodes.
  */
 public final class Tunnel {
     /**
@@ -42,8 +42,8 @@ public final class Tunnel {
      * <br>
      * For each pair:
      * <ul>
-     * <li>first element is id of app on {@link #endpoint1RoutingId} node.
-     * <li>second element is id of app on {@link #endpoint2RoutingId} node.
+     * <li>First element: application ID on {@link #endpoint1RoutingId}.</li>
+     * <li>Second element: application ID on {@link #endpoint2RoutingId}.</li>
      * </ul>
      * <br>
      * And each app can communicate only with app in the same pair.
@@ -64,7 +64,7 @@ public final class Tunnel {
     /** Validates fields values. */
     void validateFields() {
         if (endpoint1RoutingId >= endpoint2RoutingId) {
-            throw new IllegalArgumentException("Src routing id must be less than dst routing id");
+            throw new IllegalArgumentException("The source routing ID must be strictly less than the destination routing ID");
         }
     }
 

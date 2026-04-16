@@ -13,7 +13,7 @@ public final class Frame {
      */
     public static final byte TYPE_DATA = 0;
     /**
-     * Frame witout any data. This frame is used to open tunnel (usually
+     * Frame without any data. This frame is used to open tunnel (usually
      * shortest ordered way that connects two devices through other nodes without
      * self intersections).
      */
@@ -118,12 +118,12 @@ public final class Frame {
             }
         } else if (type == TYPE_DATA_TUNNEL) {
             if (encryptedData.length == 0) {
-                throw new IllegalArgumentException("Data tunnel framemust have encrypted data");
+                throw new IllegalArgumentException("Data tunnel frame must have encrypted data");
             }
         } else if (type == TYPE_CLOSE_TUNNEL) {
             if (encryptedData.length != 0) {
                 throw new IllegalArgumentException(
-                        "Close tunnel framemustn't have encrypted data.");
+                        "Close tunnel frame mustn't have encrypted data.");
             }
         }
     }

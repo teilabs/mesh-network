@@ -15,11 +15,11 @@ import java.util.Arrays;
 public final class MeshOutgoingMessage {
     /**
      * Simple Message that distributes through all neighbours and stores in memory
-     * for future distributing.
+     * for future distribution.
      */
     public static final byte TYPE_DATA = 0;
     /**
-     * Message witout any data. This message is used to open tunnel (usually
+     * Message without any data. This message is used to open tunnel (usually
      * shortest ordered way that connects two devices through other nodes without
      * self intersections).
      */
@@ -84,12 +84,12 @@ public final class MeshOutgoingMessage {
             }
         } else if (type == TYPE_DATA_TUNNEL) {
             if (data.length == 0) {
-                throw new IllegalArgumentException("Data tunnel framemust have data");
+                throw new IllegalArgumentException("Data tunnel frame must have data");
             }
         } else if (type == TYPE_CLOSE_TUNNEL) {
             if (data.length != 0) {
                 throw new IllegalArgumentException(
-                        "Close tunnel framemustn't have data.");
+                        "Close tunnel frame mustn't have data.");
             }
         }
     }
