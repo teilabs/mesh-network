@@ -35,32 +35,42 @@ public class HashMapTunnelManager implements TunnelManager {
 
     @Override
     public void addTunnel(Tunnel tunnel) {
-        if ((tunnel.getEndpoint2RoutingId() == keyPair.routingId() || tunnel.getEndpoint1RoutingId() == keyPair.routingId())
+        // If current node is one of tunnel endpoints, we must request permission to
+        // open tunnel
+        if ((tunnel.getEndpoint2RoutingId() == keyPair.routingId()
+                || tunnel.getEndpoint1RoutingId() == keyPair.routingId())
                 && !tunnelManagerEvents.checkTunnelOpenAccess(tunnel)) {
             throw new RuntimeException("Tunnel open acces denied");
         }
-        if (tunnels.containsValue(tunnel)) {
-            tunnels.computeIfPresent(Tunnel.generateTunnelId(tunnel.getEndpoint1RoutingId(), tunnel.getEndpoint2RoutingId()),
-                    (k, v) -> {
-                        Set<Pair<Short, Short>> appIds = Collections.synchronizedSet(v.getAppIds());
-                        tunnel.getAppIds().forEach((p) -> appIds.add(p));
-                        return new Tunnel(v.getEndpoint1RoutingId(), v.getEndpoint2RoutingId(), v.getPrevRoutingId(),
-                                v.getNextRoutingId(), appIds);
-                    });
-        } else {
-            tunnels.computeIfAbsent(Tunnel.generateTunnelId(tunnel.getEndpoint1RoutingId(), tunnel.getEndpoint2RoutingId()),
-                    k -> tunnel);
-        }
+
+        tunnels.computeIfPresent(
+                Tunnel.generateTunnelId(tunnel.getEndpoint1RoutingId(), tunnel.getEndpoint2RoutingId()),
+                (k, v) -> {
+                    // If tunnel with this tunnelId already exists, we should add all new app pairs
+                    // to it and rewrite it in storage
+                    Set<Pair<Short, Short>> appIds = Collections.synchronizedSet(v.getAppIds());
+                    tunnel.getAppIds().forEach((p) -> appIds.add(p));
+                    return new Tunnel(v.getEndpoint1RoutingId(), v.getEndpoint2RoutingId(), v.getPrevRoutingId(),
+                            v.getNextRoutingId(), appIds);
+                });
+        tunnels.computeIfAbsent(Tunnel.generateTunnelId(tunnel.getEndpoint1RoutingId(), tunnel.getEndpoint2RoutingId()),
+                k -> tunnel);
     }
 
     @Override
     public void removeTunnel(Tunnel tunnel) {
-        tunnels.computeIfPresent(Tunnel.generateTunnelId(tunnel.getEndpoint1RoutingId(), tunnel.getEndpoint2RoutingId()),
+        tunnels.computeIfPresent(
+                Tunnel.generateTunnelId(tunnel.getEndpoint1RoutingId(), tunnel.getEndpoint2RoutingId()),
                 (k, v) -> {
+                    // Remove from tunnel all app pairs that we want to delete
                     Set<Pair<Short, Short>> appIds = Collections.synchronizedSet(v.getAppIds());
                     tunnel.getAppIds().forEach((p) -> appIds.remove(p));
+
+                    // If there are no more app pairs, remove tunnel
                     if (appIds.isEmpty())
                         return null;
+
+                    // Otherwise, rewrite it in storage
                     return new Tunnel(v.getEndpoint1RoutingId(), v.getEndpoint2RoutingId(), v.getPrevRoutingId(),
                             v.getNextRoutingId(), appIds);
                 });
@@ -85,32 +95,35 @@ public class HashMapTunnelManager implements TunnelManager {
 
     @Override
     public void addPendingTunnel(Tunnel tunnel) throws RuntimeException {
-        if ((tunnel.getEndpoint2RoutingId() == keyPair.routingId() || tunnel.getEndpoint1RoutingId() == keyPair.routingId())
-                && !tunnelManagerEvents.checkTunnelOpenAccess(tunnel)) {
-            throw new RuntimeException("Tunnel open acces denied");
-        }
-        if (pendingTunnels.containsValue(tunnel)) {
-            pendingTunnels.computeIfPresent(Tunnel.generateTunnelId(tunnel.getEndpoint1RoutingId(), tunnel.getEndpoint2RoutingId()),
-                    (k, v) -> {
-                        Set<Pair<Short, Short>> appIds = Collections.synchronizedSet(v.getAppIds());
-                        tunnel.getAppIds().forEach((p) -> appIds.add(p));
-                        return new Tunnel(v.getEndpoint1RoutingId(), v.getEndpoint2RoutingId(), v.getPrevRoutingId(),
-                                v.getNextRoutingId(), appIds);
-                    });
-        } else {
-            pendingTunnels.computeIfAbsent(Tunnel.generateTunnelId(tunnel.getEndpoint1RoutingId(), tunnel.getEndpoint2RoutingId()),
-                    k -> tunnel);
-        }
+        pendingTunnels.computeIfPresent(
+                Tunnel.generateTunnelId(tunnel.getEndpoint1RoutingId(), tunnel.getEndpoint2RoutingId()),
+                (k, v) -> {
+                    // If tunnel with this tunnelId already exists, we should add all new app pairs
+                    // to it and rewrite it in storage
+                    Set<Pair<Short, Short>> appIds = Collections.synchronizedSet(v.getAppIds());
+                    tunnel.getAppIds().forEach((p) -> appIds.add(p));
+                    return new Tunnel(v.getEndpoint1RoutingId(), v.getEndpoint2RoutingId(), v.getPrevRoutingId(),
+                            v.getNextRoutingId(), appIds);
+                });
+        pendingTunnels.computeIfAbsent(
+                Tunnel.generateTunnelId(tunnel.getEndpoint1RoutingId(), tunnel.getEndpoint2RoutingId()),
+                k -> tunnel);
     }
 
     @Override
     public void removePendingTunnel(Tunnel tunnel) {
-        pendingTunnels.computeIfPresent(Tunnel.generateTunnelId(tunnel.getEndpoint1RoutingId(), tunnel.getEndpoint2RoutingId()),
+        pendingTunnels.computeIfPresent(
+                Tunnel.generateTunnelId(tunnel.getEndpoint1RoutingId(), tunnel.getEndpoint2RoutingId()),
                 (k, v) -> {
+                    // Remove from tunnel all app pairs that we want to delete
                     Set<Pair<Short, Short>> appIds = Collections.synchronizedSet(v.getAppIds());
                     tunnel.getAppIds().forEach((p) -> appIds.remove(p));
+
+                    // If there are no more app pairs, remove tunnel
                     if (appIds.isEmpty())
                         return null;
+
+                    // Otherwise, rewrite it in storage
                     return new Tunnel(v.getEndpoint1RoutingId(), v.getEndpoint2RoutingId(), v.getPrevRoutingId(),
                             v.getNextRoutingId(), appIds);
                 });
@@ -121,6 +134,7 @@ public class HashMapTunnelManager implements TunnelManager {
         if (!pendingTunnels.containsKey(tunnelId)) {
             return false;
         }
-        return pendingTunnels.get(tunnelId).getAppIds().contains(new Pair<Short, Short>(endpoint1AppId, endpoint2AppId));
+        return pendingTunnels.get(tunnelId).getAppIds()
+                .contains(new Pair<Short, Short>(endpoint1AppId, endpoint2AppId));
     }
 }

@@ -20,7 +20,6 @@ public class BinaryFrameCodec implements FrameCodec {
                 long dstRoutingId = buffer.getLong();
                 byte[] nonce = new byte[FrameConstants.NONCE_SIZE_v1];
                 buffer.get(nonce);
-                long tunnelId = buffer.getLong();
                 byte[] signature = new byte[FrameConstants.SIGNATURE_SIZE_v1];
                 buffer.get(signature);
                 byte[] encryptedData = new byte[buffer.remaining()];
@@ -34,7 +33,6 @@ public class BinaryFrameCodec implements FrameCodec {
                         srcPubKey,
                         dstRoutingId,
                         nonce,
-                        tunnelId,
                         signature,
                         encryptedData);
             }
@@ -61,7 +59,6 @@ public class BinaryFrameCodec implements FrameCodec {
                         .put(frame.getSrcPubKey())
                         .putLong(frame.getDstRoutingId())
                         .put(frame.getNonce())
-                        .putLong(frame.getTunnelId())
                         .put(frame.getSignature())
                         .put(frame.getEncryptedData());
 
@@ -88,8 +85,7 @@ public class BinaryFrameCodec implements FrameCodec {
                         .putShort(frame.getDstAppId())
                         .put(frame.getSrcPubKey())
                         .putLong(frame.getDstRoutingId())
-                        .put(frame.getNonce())
-                        .putLong(frame.getTunnelId());
+                        .put(frame.getNonce());
 
                 return buffer.array();
             }

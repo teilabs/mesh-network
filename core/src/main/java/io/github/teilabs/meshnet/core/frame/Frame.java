@@ -53,9 +53,6 @@ public final class Frame {
     /** 12 byte nonce used for encrypting this Frame data. */
     private final byte[] nonce;
 
-    /** Id of tunnel that this Frame is using. */
-    private long tunnelId;
-
     /**
      * Ed25519 signature of this Frame header (part of frame, see
      * {@link FrameCodec.serializeHeader} implementations).
@@ -68,7 +65,6 @@ public final class Frame {
     public Frame(byte version, byte type, int timestamp, short srcAppId, short dstAppId, byte[] srcPubKey,
             long dstRoutingId,
             byte[] nonce,
-            long tunnelId,
             byte[] signature,
             byte[] encryptedData) {
         this.version = version;
@@ -79,7 +75,6 @@ public final class Frame {
         this.srcPubKey = (srcPubKey != null) ? srcPubKey.clone() : new byte[0];
         this.dstRoutingId = dstRoutingId;
         this.nonce = nonce;
-        this.tunnelId = tunnelId;
         this.signature = (signature != null) ? signature.clone() : new byte[0];
         this.encryptedData = (encryptedData != null) ? encryptedData.clone() : new byte[0];
 
@@ -112,9 +107,9 @@ public final class Frame {
     /** Validates type related fields. */
     private void validateByType() {
         if (type == TYPE_DATA) {
-            if (encryptedData.length == 0 || tunnelId != 0) {
+            if (encryptedData.length == 0) {
                 throw new IllegalArgumentException(
-                        "Data frame must have encrypted data. tunnelId must equal 0");
+                        "Data frame must have encrypted data.");
             }
         } else if (type == TYPE_OPEN_TUNNEL) {
             if (encryptedData.length != 0) {
@@ -165,10 +160,6 @@ public final class Frame {
         return nonce.clone();
     }
 
-    public long getTunnelId() {
-        return tunnelId;
-    }
-
     public byte[] getSignature() {
         return signature.clone();
     }
@@ -189,7 +180,6 @@ public final class Frame {
         result = prime * result + Arrays.hashCode(srcPubKey);
         result = prime * result + (int) (dstRoutingId ^ (dstRoutingId >>> 32));
         result = prime * result + Arrays.hashCode(nonce);
-        result = prime * result + (int) (tunnelId ^ (tunnelId >>> 32));
         result = prime * result + Arrays.hashCode(signature);
         result = prime * result + Arrays.hashCode(encryptedData);
         return result;
@@ -219,8 +209,6 @@ public final class Frame {
         if (dstRoutingId != other.dstRoutingId)
             return false;
         if (!Arrays.equals(nonce, other.nonce))
-            return false;
-        if (tunnelId != other.tunnelId)
             return false;
         if (!Arrays.equals(signature, other.signature))
             return false;

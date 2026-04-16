@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Dfault implementation of {@link TransportProvider}.
+ * Default implementation of {@link TransportProvider}.
  */
 public class DefaultTransportProvider implements TransportProvider {
     private final FrameCodec frameCodec;

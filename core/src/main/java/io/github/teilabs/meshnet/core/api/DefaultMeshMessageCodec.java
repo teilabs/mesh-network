@@ -5,8 +5,10 @@ import io.github.teilabs.meshnet.core.crypto.Ed25519KeyPair;
 import io.github.teilabs.meshnet.core.frame.Frame;
 import io.github.teilabs.meshnet.core.frame.FrameCodec;
 import io.github.teilabs.meshnet.core.frame.FrameConstants;
-import io.github.teilabs.meshnet.core.routing.Tunnel;
 
+/**
+ * Default implementation of {@link MeshMessageCodec}.
+ */
 public final class DefaultMeshMessageCodec implements MeshMessageCodec {
     private final CryptoProvider cryptoProvider;
 
@@ -42,24 +44,19 @@ public final class DefaultMeshMessageCodec implements MeshMessageCodec {
         byte[] srcPubKey = keyPair.publicKey();
         long dstRoutingId = Ed25519KeyPair.generateRoutingId(message.getDstPubKey());
         byte[] nonce = cryptoProvider.generateNonce();
-        long tunnelId = 0;
-
-        if (type == 1 || type == 2 || type == 3) {
-            tunnelId = Tunnel.generateTunnelId(Ed25519KeyPair.generateRoutingId(srcPubKey), dstRoutingId);
-        }
 
         // Serialize header fields for future usage
         byte[] serializedHeader = frameCodec.serializeHeader(new Frame(version, type, timestamp, srcAppId,
-                dstAppId, srcPubKey, dstRoutingId, nonce, tunnelId, new byte[0], new byte[0]));
+                dstAppId, srcPubKey, dstRoutingId, nonce, new byte[0], new byte[0]));
 
-        // Signing frame header for author proving on destination node
+        // Sign frame header for author proving on destination node
         byte[] signature = cryptoProvider.sign(serializedHeader,
                 keyPair.privateKey());
         byte[] encryptedData = cryptoProvider.encrypt(message.getDstPubKey(), nonce, serializedHeader,
                 message.getdata());
 
         return new Frame(
-                version, type, timestamp, srcAppId, dstAppId, srcPubKey, dstRoutingId, nonce, tunnelId, signature,
+                version, type, timestamp, srcAppId, dstAppId, srcPubKey, dstRoutingId, nonce, signature,
                 encryptedData);
     }
 }

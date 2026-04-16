@@ -1,5 +1,8 @@
 package io.github.teilabs.meshnet.core.crypto;
 
+/**
+ * {@link CryptoProvider} implementation with Bouncy Castle library.
+ */
 public final class BouncyCastleCryptoProvider implements CryptoProvider {
     @Override
     public Ed25519KeyPair generateKeyPair() {
