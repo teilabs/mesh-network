@@ -64,9 +64,9 @@ public final class MeshOutgoingMessage {
         if (type < 0 || type > 3) {
             throw new IllegalArgumentException("Type must be in range from 0 to 3");
         }
-        if (dstPubKey.length != FrameConstants.PUBLICK_KEY_SIZE_v1) {
+        if (dstPubKey.length != FrameConstants.PUBLIC_KEY_SIZE_v1) {
             throw new IllegalArgumentException(
-                    "Dst public key must have length of " + FrameConstants.PUBLICK_KEY_SIZE_v1 + " bytes");
+                    "Dst public key must have length of " + FrameConstants.PUBLIC_KEY_SIZE_v1 + " bytes");
         }
     }
 

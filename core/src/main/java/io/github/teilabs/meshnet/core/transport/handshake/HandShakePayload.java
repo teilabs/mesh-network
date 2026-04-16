@@ -21,9 +21,9 @@ public final class HandShakePayload {
 
     /** Validates fields values. */
     private void validateFields() {
-        if (srcPubKey.length != FrameConstants.PUBLICK_KEY_SIZE_v1) {
+        if (srcPubKey.length != FrameConstants.PUBLIC_KEY_SIZE_v1) {
             throw new IllegalArgumentException(
-                    "Src public key must have length of " + FrameConstants.PUBLICK_KEY_SIZE_v1 + " bytes");
+                    "Src public key must have length of " + FrameConstants.PUBLIC_KEY_SIZE_v1 + " bytes");
         }
         if (signature.length != FrameConstants.SIGNATURE_SIZE_v1) {
             throw new IllegalArgumentException(

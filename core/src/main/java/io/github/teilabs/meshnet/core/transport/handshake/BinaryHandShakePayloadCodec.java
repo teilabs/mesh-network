@@ -8,7 +8,7 @@ public class BinaryHandShakePayloadCodec implements HandShakePayloadCodec {
     public HandShakePayload parse(byte[] bytes) {
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
 
-        byte[] srcPubKey = new byte[FrameConstants.PUBLICK_KEY_SIZE_v1];
+        byte[] srcPubKey = new byte[FrameConstants.PUBLIC_KEY_SIZE_v1];
         buffer.get(srcPubKey);
         byte[] signature = new byte[FrameConstants.SIGNATURE_SIZE_v1];
         buffer.get(signature);
@@ -18,7 +18,7 @@ public class BinaryHandShakePayloadCodec implements HandShakePayloadCodec {
 
     @Override
     public byte[] serialize(HandShakePayload handShakePayload) {
-        ByteBuffer buffer = ByteBuffer.allocate(FrameConstants.PUBLICK_KEY_SIZE_v1 + FrameConstants.SIGNATURE_SIZE_v1);
+        ByteBuffer buffer = ByteBuffer.allocate(FrameConstants.PUBLIC_KEY_SIZE_v1 + FrameConstants.SIGNATURE_SIZE_v1);
 
         buffer.put(handShakePayload.getSrcPubKey());
         buffer.put(handShakePayload.getSignature());

@@ -90,9 +90,9 @@ public final class Frame {
         if (type < 0 || type > 3) {
             throw new IllegalArgumentException("Type must be in range from 0 to 3");
         }
-        if (srcPubKey.length != FrameConstants.PUBLICK_KEY_SIZE_v1) {
+        if (srcPubKey.length != FrameConstants.PUBLIC_KEY_SIZE_v1) {
             throw new IllegalArgumentException(
-                    "Src public key must have length of " + FrameConstants.PUBLICK_KEY_SIZE_v1 + " bytes");
+                    "Src public key must have length of " + FrameConstants.PUBLIC_KEY_SIZE_v1 + " bytes");
         }
         if (nonce.length != FrameConstants.NONCE_SIZE_v1) {
             throw new IllegalArgumentException(

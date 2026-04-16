@@ -15,7 +15,7 @@ public class BinaryFrameCodec implements FrameCodec {
                 int timestamp = buffer.getInt();
                 short srcAppId = buffer.getShort();
                 short dstAppId = buffer.getShort();
-                byte[] srcPubKey = new byte[FrameConstants.PUBLICK_KEY_SIZE_v1];
+                byte[] srcPubKey = new byte[FrameConstants.PUBLIC_KEY_SIZE_v1];
                 buffer.get(srcPubKey);
                 long dstRoutingId = buffer.getLong();
                 byte[] nonce = new byte[FrameConstants.NONCE_SIZE_v1];

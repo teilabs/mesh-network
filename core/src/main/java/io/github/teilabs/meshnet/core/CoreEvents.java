@@ -37,7 +37,7 @@ public interface CoreEvents {
     void stopAdvertising();
 
     /**
-     * Gets publick and priavte key from storage.
+     * Gets public and priavte key from storage.
      * 
      * @return null - if storage doesn't have any key pairs, key pair from storage -
      *         otherwise
