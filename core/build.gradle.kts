@@ -22,6 +22,5 @@ dependencies {
 
 configurations.all {
     resolutionStrategy {
-        force("org.projectlombok:lombok:1.18.30")
     }
 }
