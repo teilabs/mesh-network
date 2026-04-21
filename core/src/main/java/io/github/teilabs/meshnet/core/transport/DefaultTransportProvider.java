@@ -1,5 +1,6 @@
 package io.github.teilabs.meshnet.core.transport;
 
+import io.github.teilabs.meshnet.core.buffer.FrameBuffer;
 import io.github.teilabs.meshnet.core.crypto.CryptoProvider;
 import io.github.teilabs.meshnet.core.crypto.Ed25519KeyPair;
 import io.github.teilabs.meshnet.core.frame.Frame;
@@ -23,7 +24,7 @@ public class DefaultTransportProvider implements TransportProvider {
 
     private final TransportProviderEvents transportProviderEvents;
 
-    private final Map<Long, CompletableFuture<Boolean>> sendedHandshakes = new ConcurrentHashMap<>();
+    private final Map<Long, CompletableFuture<Boolean>> sendedHandshakes = new ConcurrentHashMap<Long, CompletableFuture<Boolean>>();
 
     private final Ed25519KeyPair keyPair;
 
@@ -35,10 +36,12 @@ public class DefaultTransportProvider implements TransportProvider {
 
     private final NodesManager nodesManager;
 
+    private final FrameBuffer frameBuffer;
+
     public DefaultTransportProvider(FrameCodec frameCodec, TransportMessageCodec transportMessageCodec,
             TransportProviderEvents transportProviderEvents, Ed25519KeyPair keyPair,
             HandShakePayloadCodec handShakePayloadCodec, CryptoProvider cryptoProvider,
-            AdvertisingPayloadCodec advertisingPayloadCodec, NodesManager nodesManager) {
+            AdvertisingPayloadCodec advertisingPayloadCodec, NodesManager nodesManager, FrameBuffer frameBuffer) {
         this.frameCodec = frameCodec;
         this.transportMessageCodec = transportMessageCodec;
         this.transportProviderEvents = transportProviderEvents;
@@ -47,6 +50,7 @@ public class DefaultTransportProvider implements TransportProvider {
         this.cryptoProvider = cryptoProvider;
         this.advertisingPayloadCodec = advertisingPayloadCodec;
         this.nodesManager = nodesManager;
+        this.frameBuffer = frameBuffer;
     }
 
     @Override
@@ -73,7 +77,7 @@ public class DefaultTransportProvider implements TransportProvider {
 
     @Override
     public CompletableFuture<Boolean> sendHandhsake(long nodeRoutingId) {
-        CompletableFuture<Boolean> future = new CompletableFuture<>();
+        CompletableFuture<Boolean> future = new CompletableFuture<Boolean>();
         // Set handshake timeout with value from TransportProvider interafce, to prevent
         // infinite waiting
         future.completeOnTimeout(false, HANDSHAKE_TIMEOUT_SEC, TimeUnit.SECONDS);
@@ -129,13 +133,15 @@ public class DefaultTransportProvider implements TransportProvider {
 
                 // Check if this is respone to our handshake or request for a new handshak
                 if (sendedHandshakes.containsKey(Ed25519KeyPair.generateRoutingId(handShakePayload.getSrcPubKey()))) {
+                    // Add node to nodes manager, because it can be not stored
+                    addNode(message.getSenderRoutingId());
+
                     // Complete stored future with true, because handshake was successful
                     sendedHandshakes.get(Ed25519KeyPair.generateRoutingId(handShakePayload.getSrcPubKey()))
                             .complete(true);
                 } else {
                     // Add node to nodes manager, because it can be not stored
-                    nodesManager.addNode(message.getSenderRoutingId());
-
+                    addNode(message.getSenderRoutingId());
                     // Send handshake response to node that requested it
                     sendHandhsakePayload(Ed25519KeyPair.generateRoutingId(handShakePayload.getSrcPubKey()));
                 }
@@ -154,7 +160,7 @@ public class DefaultTransportProvider implements TransportProvider {
                     throw new IllegalArgumentException("Invalid signature. Author prove failed");
                 }
                 // If verification passed, add node to nodes manager
-                nodesManager.addNode(message.getSenderRoutingId());
+                addNode(message.getSenderRoutingId());
                 // Send handshake to advertising node to give info about our node
                 sendHandhsakePayload(message.getSenderRoutingId());
                 break;
@@ -174,5 +180,20 @@ public class DefaultTransportProvider implements TransportProvider {
                                         keyPair.routingId(),
                                         nodeRoutingId, handShakePayloadCodec.serialize(handShakePayload))),
                         nodeRoutingId);
+    }
+
+    private void addNode(long nodeRoutingId) {
+        try {
+            // Store node in nodes manager
+            nodesManager.addNode(nodeRoutingId);
+
+            // Send stored messages to node if it is new
+            Frame[] frames = frameBuffer.getAllFrames();
+            for (Frame frame : frames) {
+                sendFrame(frame, nodeRoutingId);
+            }
+        } catch (IllegalArgumentException e) {
+            // Node already exists
+        }
     }
 }

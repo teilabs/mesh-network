@@ -46,14 +46,21 @@ public final class MeshOutgoingMessage {
     /** Data that will be sent to destination device. */
     private final byte[] data;
 
-    public MeshOutgoingMessage(byte type, short srcAppId, short dstAppId, byte[] dstPubKey,
-            byte[] data) {
+    /**
+     * Direction of this message in {@link #TYPE_OPEN_TUNNEL open tunnel request}.
+     * Should be false - if this message goes from tunnel initiator, true - if this
+     * message goes back to tunnel initiator.
+     */
+    private final boolean direction;
 
+    public MeshOutgoingMessage(byte type, short srcAppId, short dstAppId, byte[] dstPubKey,
+            byte[] data, boolean direction) {
         this.type = type;
         this.srcAppId = srcAppId;
         this.dstAppId = dstAppId;
         this.dstPubKey = dstPubKey.clone();
         this.data = (data != null) ? data.clone() : new byte[0];
+        this.direction = direction;
 
         validateFields();
         validateByType();
@@ -114,6 +121,10 @@ public final class MeshOutgoingMessage {
         return data.clone();
     }
 
+    public boolean getDirection() {
+        return direction;
+    }
+
     @Override
     public int hashCode() {
         final int prime = 31;
@@ -123,6 +134,7 @@ public final class MeshOutgoingMessage {
         result = prime * result + dstAppId;
         result = prime * result + Arrays.hashCode(dstPubKey);
         result = prime * result + Arrays.hashCode(data);
+        result = prime * result + (direction ? 1231 : 1237);
         return result;
     }
 
@@ -144,6 +156,8 @@ public final class MeshOutgoingMessage {
         if (!Arrays.equals(dstPubKey, other.dstPubKey))
             return false;
         if (!Arrays.equals(data, other.data))
+            return false;
+        if (direction != other.direction)
             return false;
         return true;
     }

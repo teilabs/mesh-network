@@ -8,8 +8,9 @@ public interface NodesManager {
      * Adds a node to the list of connected nodes.
      * 
      * @param nodeRoutingId The routing ID of the node to add.
+     * @throws IllegalArgumentException If the node is already stored.
      */
-    void addNode(long nodeRoutingId);
+    void addNode(long nodeRoutingId) throws IllegalArgumentException;
 
     /**
      * Removes a node from the list of connected nodes.

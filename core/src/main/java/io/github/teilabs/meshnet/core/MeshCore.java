@@ -52,6 +52,8 @@ public class MeshCore implements CoreInput {
 
     private final AdvertisingPayloadCodec advertisingPayloadCodec;
 
+    private final FrameBuffer frameBuffer;
+
     private final TransportProvider transportProvider;
 
     private final TunnelManager tunnelManager;
@@ -59,8 +61,6 @@ public class MeshCore implements CoreInput {
     private final MeshMessageCodec meshMessageCodec;
 
     private final FrameRouter frameRouter;
-
-    private final FrameBuffer frameBuffer;
 
     public MeshCore(CoreEvents coreEvents) {
         this.coreEvents = coreEvents;
@@ -74,6 +74,29 @@ public class MeshCore implements CoreInput {
         this.transportMessageCodec = new BinaryTransportMessageCodec();
         this.handShakePayloadCodec = new BinaryHandShakePayloadCodec();
         this.advertisingPayloadCodec = new BinaryAdvertisingPayloadCodec();
+        this.frameBuffer = new PersistentFrameBuffer(new FrameBufferEvents() {
+
+            @Override
+            public void writeFile(String path, byte[] data) {
+                coreEvents.writeFile(path, data);
+            }
+
+            @Override
+            public byte[] readFile(String path) {
+                return coreEvents.readFile(path);
+            }
+
+            @Override
+            public String[] listFiles(String folderPath) {
+                return coreEvents.listFiles(folderPath);
+            }
+
+            @Override
+            public void deleteFile(String path) {
+                coreEvents.deleteFile(path);
+            }
+
+        }, this.frameCodec);
         this.transportProvider = new DefaultTransportProvider(frameCodec, transportMessageCodec,
                 new TransportProviderEvents() {
                     @Override
@@ -100,7 +123,8 @@ public class MeshCore implements CoreInput {
                     public void stopAdvertising() {
                         coreEvents.stopAdvertising();
                     }
-                }, this.keyPair, this.handShakePayloadCodec, this.cryptoProvider, this.advertisingPayloadCodec, this.nodesManager);
+                }, this.keyPair, this.handShakePayloadCodec, this.cryptoProvider, this.advertisingPayloadCodec,
+                this.nodesManager, this.frameBuffer);
         this.tunnelManager = new HashMapTunnelManager(new TunnelManagerEvents() {
             @Override
             public boolean checkTunnelOpenAccess(Tunnel tunnel) {
@@ -108,29 +132,6 @@ public class MeshCore implements CoreInput {
             }
         }, this.keyPair);
         this.meshMessageCodec = new DefaultMeshMessageCodec(this.cryptoProvider, this.frameCodec, this.keyPair);
-        this.frameBuffer = new PersistentFrameBuffer(new FrameBufferEvents() {
-
-            @Override
-            public void writeFile(String path, byte[] data) {
-                coreEvents.writeFile(path, data);
-            }
-
-            @Override
-            public byte[] readFile(String path) {
-                return coreEvents.readFile(path);
-            }
-
-            @Override
-            public String[] listFiles(String folderPath) {
-                return coreEvents.listFiles(folderPath);
-            }
-
-            @Override
-            public void deleteFile(String path) {
-                coreEvents.deleteFile(path);
-            }
-
-        }, this.frameCodec);
         this.frameRouter = new DefaultFrameRouter(this.keyPair, new FrameRouterEvents() {
             @Override
             public void transferMessageToApp(MeshIncomingMessage message) {
@@ -140,7 +141,7 @@ public class MeshCore implements CoreInput {
                 }
                 coreEvents.transferMessageToApp(message);
             }
-        }, this.meshMessageCodec, this.cryptoProvider, this.frameCodec, this.tunnelManager, this.frameBuffer,
+        }, this.meshMessageCodec, this.cryptoProvider, this.frameCodec, this.frameBuffer,
                 this.nodesManager, this.transportProvider, this.tunnelManager);
     }
 

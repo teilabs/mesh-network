@@ -16,9 +16,9 @@ public class HashMapTunnelManager implements TunnelManager {
 
     private final Ed25519KeyPair keyPair;
 
-    private final Map<Long, Tunnel> tunnels = new ConcurrentHashMap<>();
+    private final Map<Long, Tunnel> tunnels = new ConcurrentHashMap<Long, Tunnel>();
 
-    private final Map<Long, Tunnel> pendingTunnels = new ConcurrentHashMap<>();
+    private final Map<Long, Tunnel> pendingTunnels = new ConcurrentHashMap<Long, Tunnel>();
 
     public HashMapTunnelManager(TunnelManagerEvents tunnelManagerEvents, Ed25519KeyPair keyPair) {
         this.tunnelManagerEvents = tunnelManagerEvents;

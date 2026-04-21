@@ -2,10 +2,11 @@ package io.github.teilabs.meshnet.core.routing;
 
 import io.github.teilabs.meshnet.core.crypto.Ed25519KeyPair;
 import java.nio.ByteBuffer;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashSet;
 import java.util.Set;
 import kotlin.Pair;
-import org.bouncycastle.util.Arrays;
 
 /**
  * Class for storing info about tunтel between two nodes.
@@ -64,7 +65,8 @@ public final class Tunnel {
     /** Validates fields values. */
     void validateFields() {
         if (endpoint1RoutingId >= endpoint2RoutingId) {
-            throw new IllegalArgumentException("The source routing ID must be strictly less than the destination routing ID");
+            throw new IllegalArgumentException(
+                    "The source routing ID must be strictly less than the destination routing ID");
         }
     }
 
@@ -85,14 +87,20 @@ public final class Tunnel {
     }
 
     public Set<Pair<Short, Short>> getAppIds() {
-        return new HashSet<>(appIds);
+        return new HashSet<Pair<Short, Short>>(appIds);
     }
 
     public static long generateTunnelId(long endpoint1RoutingId, long endpoint2RoutingId) {
         ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES * 2);
         buffer.putLong(Math.min(endpoint1RoutingId, endpoint2RoutingId));
         buffer.putLong(Math.max(endpoint1RoutingId, endpoint2RoutingId));
-        return Arrays.hashCode(buffer.array()); // TODO: get long hashcode
+        try {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(buffer.array());
+            return ByteBuffer.wrap(hash, 0, 8).getLong();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override

@@ -35,15 +35,15 @@ public class DefaultFrameRouter implements FrameRouter {
 
     public DefaultFrameRouter(Ed25519KeyPair keyPair, FrameRouterEvents frameRouterEvents,
             MeshMessageCodec meshMessageCodec, CryptoProvider cryptoProvider, FrameCodec frameCodec,
-            TunnelManager tunnelManager, FrameBuffer frameBuffer, NodesManager nodesManager,
-            TransportProvider transportProvider, TunnelManager tunnelManager2) {
+            FrameBuffer frameBuffer, NodesManager nodesManager,
+            TransportProvider transportProvider, TunnelManager tunnelManager) {
         this.keyPair = keyPair;
         this.frameRouterEvents = frameRouterEvents;
         this.frameBuffer = frameBuffer;
         this.meshMessageCodec = meshMessageCodec;
         this.transportProvider = transportProvider;
         this.nodesManager = nodesManager;
-        this.tunnelManager = tunnelManager2;
+        this.tunnelManager = tunnelManager;
     }
 
     @Override
@@ -87,7 +87,7 @@ public class DefaultFrameRouter implements FrameRouter {
                     }
 
                     // Fill appIds set with correct ordered pair
-                    Set<Pair<Short, Short>> appIds = Collections.synchronizedSet(new HashSet<>());
+                    Set<Pair<Short, Short>> appIds = Collections.synchronizedSet(new HashSet<Pair<Short, Short>>());
                     appIds.add(new Pair<Short, Short>(endpoint1AppId, endpoint2AppId));
 
                     // Create tunnel entity between this two nodes with provided appIds
@@ -108,7 +108,7 @@ public class DefaultFrameRouter implements FrameRouter {
                             // If there isn't a pending tunnel, it means that we are not initiator of the
                             // tunnel and we should send open tunnel message to the initiator node
                             MeshOutgoingMessage message = new MeshOutgoingMessage(MeshOutgoingMessage.TYPE_OPEN_TUNNEL,
-                                    frame.getDstAppId(), frame.getSrcAppId(), frame.getSrcPubKey(), new byte[0]);
+                                    frame.getDstAppId(), frame.getSrcAppId(), frame.getSrcPubKey(), new byte[0], true);
                             transportProvider.sendFrame(meshMessageCodec.generateOutgoingFrame(message),
                                     prevNodeRoutingId);
                         }
@@ -122,7 +122,7 @@ public class DefaultFrameRouter implements FrameRouter {
 
                         // Send close tunnel frame to another endpoint node to tell that opening failed
                         MeshOutgoingMessage message = new MeshOutgoingMessage(MeshOutgoingMessage.TYPE_CLOSE_TUNNEL,
-                                frame.getDstAppId(), frame.getSrcAppId(), frame.getSrcPubKey(), new byte[0]);
+                                frame.getDstAppId(), frame.getSrcAppId(), frame.getSrcPubKey(), new byte[0], false);
                         transportProvider.sendFrame(meshMessageCodec.generateOutgoingFrame(message),
                                 prevNodeRoutingId);
                     }
@@ -145,6 +145,11 @@ public class DefaultFrameRouter implements FrameRouter {
                     // If there is a tunnel it means, that this message is going back to tunnel
                     // initiator and we should fill tunnel info with our second neighbour
                     if (tunnelManager.containsTunnel(tunnelId, endpoint1AppId, endpoint2AppId)) {
+                        // If frame direction is false, it means that this message isn't going back to
+                        // tunnel initiator, so we should skip it to prevent cycle
+                        if (!frame.getDirection()) {
+                            break;
+                        }
                         Tunnel tunnel = tunnelManager.getTunnel(tunnelId);
                         // Delete stored tunnel to replace it by updated entity
                         tunnelManager.removeTunnel(tunnel);
@@ -162,7 +167,7 @@ public class DefaultFrameRouter implements FrameRouter {
                         // If there isn't a tunnel it means, that this message is going through this
                         // node first time and we should store tunnel with prevNodeRoutingId as one of
                         // neighbours
-                        Set<Pair<Short, Short>> appIds = Collections.synchronizedSet(new HashSet<>());
+                        Set<Pair<Short, Short>> appIds = Collections.synchronizedSet(new HashSet<Pair<Short, Short>>());
                         appIds.add(new Pair<Short, Short>(endpoint1AppId, endpoint2AppId));
 
                         // Create tunnel entity with filled prevRoutingId (our first neighbour)
@@ -223,7 +228,7 @@ public class DefaultFrameRouter implements FrameRouter {
                     }
 
                     // Fill appIds set with correct ordered pair
-                    Set<Pair<Short, Short>> appIds = Collections.synchronizedSet(new HashSet<>());
+                    Set<Pair<Short, Short>> appIds = Collections.synchronizedSet(new HashSet<Pair<Short, Short>>());
                     appIds.add(new Pair<Short, Short>(endpoint1AppId, endpoint2AppId));
 
                     // Remove tunnel and pending tunnel from local memory
@@ -259,7 +264,7 @@ public class DefaultFrameRouter implements FrameRouter {
                     }
 
                     // Fill appIds set with correct ordered pair
-                    Set<Pair<Short, Short>> appIds = Collections.synchronizedSet(new HashSet<>());
+                    Set<Pair<Short, Short>> appIds = Collections.synchronizedSet(new HashSet<Pair<Short, Short>>());
                     appIds.add(new Pair<Short, Short>(endpoint1AppId, endpoint2AppId));
 
                     // Remove tunnel from local memory
@@ -311,7 +316,7 @@ public class DefaultFrameRouter implements FrameRouter {
                 }
 
                 // Fill appIds set with correct ordered pair
-                Set<Pair<Short, Short>> appIds = Collections.synchronizedSet(new HashSet<>());
+                Set<Pair<Short, Short>> appIds = Collections.synchronizedSet(new HashSet<Pair<Short, Short>>());
                 appIds.add(new Pair<Short, Short>(endpoint1AppId, endpoint2AppId));
 
                 // Create tunnel entity between this two nodes with provided appIds
@@ -358,7 +363,7 @@ public class DefaultFrameRouter implements FrameRouter {
                 }
 
                 // Fill appIds set with correct ordered pair
-                Set<Pair<Short, Short>> appIds = Collections.synchronizedSet(new HashSet<>());
+                Set<Pair<Short, Short>> appIds = Collections.synchronizedSet(new HashSet<Pair<Short, Short>>());
                 appIds.add(new Pair<Short, Short>(endpoint1AppId, endpoint2AppId));
 
                 // Remove tunnel from local memory to know that we can't use it anymore

@@ -9,7 +9,7 @@ import java.util.Set;
  */
 public class HashSetNodesManager implements NodesManager {
     // TODO: send handshakes to all nodes with some interval
-    private final Set<Long> nodes = Collections.synchronizedSet(new HashSet<>());
+    private final Set<Long> nodes = Collections.synchronizedSet(new HashSet<Long>());
 
     @Override
     public void addNode(long nodeRoutingId) {
@@ -19,7 +19,6 @@ public class HashSetNodesManager implements NodesManager {
         }
 
         nodes.add(nodeRoutingId);
-        // TODO: send all saved frames to node
     }
 
     @Override

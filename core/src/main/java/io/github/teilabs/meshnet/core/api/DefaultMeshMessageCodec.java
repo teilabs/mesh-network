@@ -25,7 +25,8 @@ public final class DefaultMeshMessageCodec implements MeshMessageCodec {
     @Override
     public MeshIncomingMessage parseIncomingFrame(Frame frame) {
         // Validate frame signature to prove author
-        if (!cryptoProvider.verify(frameCodec.serializeHeader(frame), frame.getSignature(), frame.getSrcPubKey())) {
+        if (!cryptoProvider.verify(frameCodec.serializeHeader(frame), frame.getSignature(),
+                frame.getSrcPubKey())) {
             throw new IllegalArgumentException("Invalid signature. Author prove failed");
         }
         byte[] decryptedData = cryptoProvider.decrypt(keyPair.privateKey(), frame.getNonce(),
@@ -44,10 +45,11 @@ public final class DefaultMeshMessageCodec implements MeshMessageCodec {
         byte[] srcPubKey = keyPair.publicKey();
         long dstRoutingId = Ed25519KeyPair.generateRoutingId(message.getDstPubKey());
         byte[] nonce = cryptoProvider.generateNonce();
+        boolean direction = message.getDirection();
 
         // Serialize header fields for future usage
         byte[] serializedHeader = frameCodec.serializeHeader(new Frame(version, type, timestamp, srcAppId,
-                dstAppId, srcPubKey, dstRoutingId, nonce, new byte[0], new byte[0]));
+                dstAppId, srcPubKey, dstRoutingId, nonce, direction, new byte[0], new byte[0]));
 
         // Sign frame header for author proving on destination node
         byte[] signature = cryptoProvider.sign(serializedHeader,
@@ -56,7 +58,7 @@ public final class DefaultMeshMessageCodec implements MeshMessageCodec {
                 message.getdata());
 
         return new Frame(
-                version, type, timestamp, srcAppId, dstAppId, srcPubKey, dstRoutingId, nonce, signature,
+                version, type, timestamp, srcAppId, dstAppId, srcPubKey, dstRoutingId, nonce, direction, signature,
                 encryptedData);
     }
 }

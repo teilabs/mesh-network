@@ -16,7 +16,7 @@ public class PersistentFrameBuffer implements FrameBuffer {
 
     private final FrameBufferEvents frameBufferEvents;
 
-    private final Set<Frame> frames = Collections.synchronizedSet(new LinkedHashSet<>());
+    private final Set<Frame> frames = Collections.synchronizedSet(new LinkedHashSet<Frame>());
 
     private final FrameCodec frameCodec;
 
