@@ -9,7 +9,7 @@ import java.util.Set;
 import kotlin.Pair;
 
 /**
- * Class for storing info about tunтel between two nodes.
+ * Class for storing info about tunnel between two nodes.
  */
 public final class Tunnel {
     /**
