@@ -49,7 +49,7 @@ public class DefaultFrameRouter implements FrameRouter {
     @Override
     public void onFrameReceived(Frame frame, long prevNodeRoutingId) {
         switch (frame.getType()) {
-            case 0: {
+            case Frame.TYPE_DATA: {
                 // If we are final destination of this frame we should deliver it to the app
                 if (frame.getDstRoutingId() == keyPair.routingId()) {
                     MeshIncomingMessage message = meshMessageCodec.parseIncomingFrame(frame);
@@ -70,7 +70,7 @@ public class DefaultFrameRouter implements FrameRouter {
                 }
                 break;
             }
-            case 1: {
+            case Frame.TYPE_OPEN_TUNNEL: {
                 if (frame.getDstRoutingId() == keyPair.routingId()) {
                     // Get src and dst routing ids from frame
                     long srcRoutingId = Ed25519KeyPair.generateRoutingId(frame.getSrcPubKey());
@@ -180,9 +180,9 @@ public class DefaultFrameRouter implements FrameRouter {
                 }
                 break;
             }
-            case 2: {
+            case Frame.TYPE_DATA_TUNNEL: {
                 if (frame.getDstRoutingId() == keyPair.routingId()) {
-                    validateTunnelFrame(frame);
+                    validateTunnelFrame(frame, prevNodeRoutingId);
 
                     // If we are final destination, notify destination app that frame recieved
                     frameRouterEvents.transferMessageToApp(meshMessageCodec.parseIncomingFrame(frame));
@@ -193,7 +193,7 @@ public class DefaultFrameRouter implements FrameRouter {
                             frame.getDstRoutingId());
                     Tunnel tunnel = tunnelManager.getTunnel(tunnelId);
 
-                    validateTunnelFrame(frame, tunnelId);
+                    validateTunnelFrame(frame, tunnelId, prevNodeRoutingId);
 
                     // Deermine which node should be next by excluding the previous node from our
                     // tunnel neighbours and send frame to it
@@ -203,7 +203,7 @@ public class DefaultFrameRouter implements FrameRouter {
                 }
                 break;
             }
-            case 3: {
+            case Frame.TYPE_CLOSE_TUNNEL: {
                 if (frame.getDstRoutingId() == keyPair.routingId()) {
                     // Get tunnel and pending tunnel from memory to delete it
                     long tunnelId = Tunnel.generateTunnelId(Ed25519KeyPair.generateRoutingId(frame.getSrcPubKey()),
@@ -211,7 +211,7 @@ public class DefaultFrameRouter implements FrameRouter {
                     Tunnel tunnel = tunnelManager.getTunnel(tunnelId);
                     Tunnel pendingTunnel = tunnelManager.getPendingTunnel(tunnelId);
 
-                    validateTunnelFrame(frame, tunnelId);
+                    validateTunnelFrame(frame, tunnelId, prevNodeRoutingId);
 
                     // Get src and dst routing ids from frame
                     long srcRoutingId = Ed25519KeyPair.generateRoutingId(frame.getSrcPubKey());
@@ -247,7 +247,7 @@ public class DefaultFrameRouter implements FrameRouter {
                             frame.getDstRoutingId());
                     Tunnel tunnel = tunnelManager.getTunnel(tunnelId);
 
-                    validateTunnelFrame(frame, tunnelId);
+                    validateTunnelFrame(frame, tunnelId, prevNodeRoutingId);
 
                     // Get src and dst routing ids from frame
                     long srcRoutingId = Ed25519KeyPair.generateRoutingId(frame.getSrcPubKey());
@@ -286,7 +286,7 @@ public class DefaultFrameRouter implements FrameRouter {
     @Override
     public void sendFrame(Frame frame) {
         switch (frame.getType()) {
-            case 0: {
+            case Frame.TYPE_DATA: {
                 // Checking that we aren't already distributing this frame
                 if (!frameBuffer.containsFrame(frame)) {
                     // If we have connection to destination node we should immediatle send frame to
@@ -300,7 +300,7 @@ public class DefaultFrameRouter implements FrameRouter {
                 }
                 break;
             }
-            case 1: {
+            case Frame.TYPE_OPEN_TUNNEL: {
                 // Get src and dst routing ids from frame
                 long srcRoutingId = Ed25519KeyPair.generateRoutingId(frame.getSrcPubKey());
                 long dstRoutingId = frame.getDstRoutingId();
@@ -328,25 +328,25 @@ public class DefaultFrameRouter implements FrameRouter {
                 transportProvider.sendFrameToEveryone(frame);
                 break;
             }
-            case 2: {
+            case Frame.TYPE_DATA_TUNNEL: {
                 // Get tunnel from memory to find next node to send frame
                 long tunnelId = Tunnel.generateTunnelId(Ed25519KeyPair.generateRoutingId(frame.getSrcPubKey()),
                         frame.getDstRoutingId());
                 Tunnel tunnel = tunnelManager.getTunnel(tunnelId);
 
-                validateTunnelFrame(frame, tunnelId);
+                validateTunnelFrame(frame, tunnelId, tunnel.getPrevRoutingId());
 
                 // Send frame to next node from tunnel entity
                 transportProvider.sendFrame(frame, tunnel.getNextRoutingId());
                 break;
             }
-            case 3: {
+            case Frame.TYPE_CLOSE_TUNNEL: {
                 // Get tunnel from memory to find next node to send frame
                 long tunnelId = Tunnel.generateTunnelId(Ed25519KeyPair.generateRoutingId(frame.getSrcPubKey()),
                         frame.getDstRoutingId());
                 Tunnel tunnel = tunnelManager.getTunnel(tunnelId);
 
-                validateTunnelFrame(frame, tunnelId);
+                validateTunnelFrame(frame, tunnelId, tunnel.getPrevRoutingId());
 
                 // Get src and dst routing ids from frame
                 long srcRoutingId = keyPair.routingId();
@@ -381,22 +381,26 @@ public class DefaultFrameRouter implements FrameRouter {
     /**
      * Validates that frame sended through the tunnel truly belongs to this tunnel
      * 
-     * @param frame frame from the tunnel
+     * @param frame             frame from the tunnel
+     * @param prevNodeRoutingId routing id of the node from which we received the
+     *                          frame
      */
-    private void validateTunnelFrame(Frame frame) {
+    private void validateTunnelFrame(Frame frame, long prevNodeRoutingId) {
         // Generate tunnelId and call validateTunnelFrame function with all arguments
         long tunnelId = Tunnel.generateTunnelId(Ed25519KeyPair.generateRoutingId(frame.getSrcPubKey()),
                 frame.getDstRoutingId());
-        validateTunnelFrame(frame, tunnelId);
+        validateTunnelFrame(frame, tunnelId, prevNodeRoutingId);
     }
 
     /**
      * Validates that frame sended through the tunnel truly belongs to this tunnel
      * 
-     * @param frame    frame from the tunnel
-     * @param tunnelId id of the tunnel
+     * @param frame             frame from the tunnel
+     * @param tunnelId          id of the tunnel
+     * @param prevNodeRoutingId routing id of the node from which we received the
+     *                          frame
      */
-    private void validateTunnelFrame(Frame frame, long tunnelId) {
+    private void validateTunnelFrame(Frame frame, long tunnelId, long prevNodeRoutingId) {
         // Get src and dst routing ids from frame
         long srcRoutingId = Ed25519KeyPair.generateRoutingId(frame.getSrcPubKey());
         long dstRoutingId = frame.getDstRoutingId();
@@ -415,6 +419,16 @@ public class DefaultFrameRouter implements FrameRouter {
         if (!tunnelManager.containsTunnel(tunnelId, endpoint1AppId, endpoint2AppId)) {
             throw new IllegalArgumentException("Tunnel does not exist. Or appIds list does not contain pair "
                     + endpoint1AppId + ":" + endpoint2AppId);
+        }
+
+        // Get tunnel, because we know that it exists
+        Tunnel tunnel = tunnelManager.getTunnel(tunnelId);
+
+        // If prevNodeRoutingId not equal to tunnel's next node routing id or prev
+        // routing id, then it's not our neighbour int the tunnel, so it hasn't got
+        // permissiopn to send us the frame in this tunnel
+        if (tunnel.getNextRoutingId() != prevNodeRoutingId && tunnel.getPrevRoutingId() != prevNodeRoutingId) {
+            throw new IllegalArgumentException("Node " + prevNodeRoutingId + " is not part of tunnel " + tunnelId);
         }
 
         // TODO: verify signature

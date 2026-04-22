@@ -10,6 +10,7 @@ public interface FrameRouter {
      * Processes incoming {@link Frame frame}.
      * 
      * @param frame incoming frame
+     * @param prevNodeRoutingId routing id of the node from which we received the frame
      */
     void onFrameReceived(Frame frame, long prevNodeRoutingId);
 
