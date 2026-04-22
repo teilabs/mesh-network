@@ -1,12 +1,12 @@
 package io.github.teilabs.meshnet.core.routing;
 
 import io.github.teilabs.meshnet.core.crypto.Ed25519KeyPair;
+import io.github.teilabs.meshnet.core.util.Pair;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashSet;
 import java.util.Set;
-import kotlin.Pair;
 
 /**
  * Class for storing info about tunnel between two nodes.

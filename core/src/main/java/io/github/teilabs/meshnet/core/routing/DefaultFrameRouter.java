@@ -10,10 +10,10 @@ import io.github.teilabs.meshnet.core.frame.Frame;
 import io.github.teilabs.meshnet.core.frame.FrameCodec;
 import io.github.teilabs.meshnet.core.transport.NodesManager;
 import io.github.teilabs.meshnet.core.transport.TransportProvider;
+import io.github.teilabs.meshnet.core.util.Pair;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-import kotlin.Pair;
 
 /**
  * Default implementation of {@link FrameRouter}.

@@ -1,11 +1,11 @@
 package io.github.teilabs.meshnet.core.routing;
 
 import io.github.teilabs.meshnet.core.crypto.Ed25519KeyPair;
+import io.github.teilabs.meshnet.core.util.Pair;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import kotlin.Pair;
 
 /**
  * Implementation of {@link TunnelManager} using HashMap to store {@link Tunnel

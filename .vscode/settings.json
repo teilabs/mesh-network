@@ -1,9 +1,6 @@
 {
   "java.import.gradle.enabled": true,
-  "java.project.sourcePaths": [
-    "core/src/main/java",
-    "core/src/test/java",
-  ],
+  "java.configuration.updateBuildConfiguration": "automatic",
   "java.completion.importOrder": [
     "io.github.teilabs.*",
     "java.*",
@@ -11,5 +8,6 @@
     "org.*",
     "com.*"
   ],
-  "java.configuration.updateBuildConfiguration": "automatic"
+  "java.jdt.ls.java.home": null,
+  "java.server.launchMode": "Standard"
 }

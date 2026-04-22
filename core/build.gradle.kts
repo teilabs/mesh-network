@@ -1,25 +1,29 @@
 plugins {
-    java
+    `java-library`
 }
 
 group = "io.github.teilabs"
+version = "0.1.0-SNAPSHOT"
 base.archivesName = "meshnet-core"
 
-repositories {
-    mavenCentral()
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
 dependencies {
-    // JUnit Jupiter
+    implementation("org.bouncycastle:bcprov-jdk18on:1.77")
+
     testImplementation("org.junit.jupiter:junit-jupiter-api:5.10.0")
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.10.0")
-
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:1.9.22")
-    
-    // Bouncy Castle Crypto API
-    implementation("org.bouncycastle:bcprov-jdk18on:1.77")
 }
 
+tasks.test {
+    useJUnitPlatform()
+    testLogging {
+        events("passed", "skipped", "failed")
+    }
+}
 configurations.all {
     resolutionStrategy {
     }

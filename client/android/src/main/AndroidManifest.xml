@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Сокеты (включая localhost) требуют INTERNET -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Фоновая работа (Android 12+) -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_CONNECTED_DEVICE" />
+
+    <!-- Уведомления (Android 13+) -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application
+        android:allowBackup="true"
+        android:label="Mesh Network Client"
+        android:supportsRtl="true"
+        android:networkSecurityConfig="@xml/network_security_config"
+        tools:targetApi="34">
+
+        <service
+            android:name=".MeshClientService"
+            android:enabled="true"
+            android:exported="false"
+            android:foregroundServiceType="dataSync|connectedDevice"
+            android:stopWithTask="false" />
+
+    </application>
+</manifest>
