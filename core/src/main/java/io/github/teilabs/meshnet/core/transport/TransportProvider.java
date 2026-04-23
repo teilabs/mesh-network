@@ -8,8 +8,6 @@ import java.util.concurrent.CompletableFuture;
  * to toher nodes.
  */
 public interface TransportProvider {
-    public static final int HANDSHAKE_TIMEOUT_SEC = 10;
-
     /**
      * Sends {@link Frame} to a specific node.
      * 

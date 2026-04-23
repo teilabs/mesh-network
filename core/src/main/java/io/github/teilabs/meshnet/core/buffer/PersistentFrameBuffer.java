@@ -1,5 +1,6 @@
 package io.github.teilabs.meshnet.core.buffer;
 
+import io.github.teilabs.meshnet.core.config.Config;
 import io.github.teilabs.meshnet.core.frame.Frame;
 import io.github.teilabs.meshnet.core.frame.FrameCodec;
 import java.util.Collections;
@@ -11,24 +12,24 @@ import java.util.Set;
  * frames.
  */
 public class PersistentFrameBuffer implements FrameBuffer {
-    private static final int MAX_FRAMES = 1000;
-    public static final String FOLDER_PATH = "frame_buffer/";
-
     private final FrameBufferEvents frameBufferEvents;
-
-    private final Set<Frame> frames = Collections.synchronizedSet(new LinkedHashSet<Frame>());
 
     private final FrameCodec frameCodec;
 
-    public PersistentFrameBuffer(FrameBufferEvents frameBufferEvents, FrameCodec frameCodec) {
+    private final Config config;
+
+    private final Set<Frame> frames = Collections.synchronizedSet(new LinkedHashSet<Frame>());
+
+    public PersistentFrameBuffer(FrameBufferEvents frameBufferEvents, FrameCodec frameCodec, Config config) {
         this.frameBufferEvents = frameBufferEvents;
         this.frameCodec = frameCodec;
+        this.config = config;
 
         // List all sved frames
-        String[] files = this.frameBufferEvents.listFiles(FOLDER_PATH);
+        String[] files = this.frameBufferEvents.listFiles(this.config.storedFramesFolderPath());
         // For each frame parse it from bytes and put in set
         for (int i = 0; i < files.length; i++) {
-            byte[] bytes = this.frameBufferEvents.readFile(FOLDER_PATH + files[i]);
+            byte[] bytes = this.frameBufferEvents.readFile(this.config.storedFramesFolderPath() + files[i]);
             Frame parsedFrame = this.frameCodec.parse(bytes);
             frames.add(parsedFrame);
         }
@@ -42,12 +43,13 @@ public class PersistentFrameBuffer implements FrameBuffer {
         }
 
         // Remooves oldest stored frame until count of frames is less than MAX_FRAMES
-        while (frames.size() >= MAX_FRAMES) {
+        while (frames.size() >= config.maxStoredFrames()) {
             Frame firstFrame = frames.iterator().next();
-            frameBufferEvents.deleteFile(FOLDER_PATH + firstFrame.hashCode() + ".bin");
+            frameBufferEvents.deleteFile(config.storedFramesFolderPath() + firstFrame.hashCode() + ".bin");
             frames.remove(firstFrame);
         }
-        frameBufferEvents.writeFile(FOLDER_PATH + frame.hashCode() + ".bin", frameCodec.serialize(frame));
+        frameBufferEvents.writeFile(config.storedFramesFolderPath() + frame.hashCode() + ".bin",
+                frameCodec.serialize(frame));
         frames.add(frame);
     }
 

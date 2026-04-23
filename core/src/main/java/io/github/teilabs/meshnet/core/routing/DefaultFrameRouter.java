@@ -4,10 +4,11 @@ import io.github.teilabs.meshnet.core.api.MeshIncomingMessage;
 import io.github.teilabs.meshnet.core.api.MeshMessageCodec;
 import io.github.teilabs.meshnet.core.api.MeshOutgoingMessage;
 import io.github.teilabs.meshnet.core.buffer.FrameBuffer;
-import io.github.teilabs.meshnet.core.crypto.CryptoProvider;
+import io.github.teilabs.meshnet.core.config.Config;
+import io.github.teilabs.meshnet.core.config.Config.TransitMode;
+import io.github.teilabs.meshnet.core.config.Config.TunnelMode;
 import io.github.teilabs.meshnet.core.crypto.Ed25519KeyPair;
 import io.github.teilabs.meshnet.core.frame.Frame;
-import io.github.teilabs.meshnet.core.frame.FrameCodec;
 import io.github.teilabs.meshnet.core.transport.NodesManager;
 import io.github.teilabs.meshnet.core.transport.TransportProvider;
 import io.github.teilabs.meshnet.core.util.Pair;
@@ -33,10 +34,12 @@ public class DefaultFrameRouter implements FrameRouter {
 
     private final TunnelManager tunnelManager;
 
+    private final Config config;
+
     public DefaultFrameRouter(Ed25519KeyPair keyPair, FrameRouterEvents frameRouterEvents,
-            MeshMessageCodec meshMessageCodec, CryptoProvider cryptoProvider, FrameCodec frameCodec,
+            MeshMessageCodec meshMessageCodec,
             FrameBuffer frameBuffer, NodesManager nodesManager,
-            TransportProvider transportProvider, TunnelManager tunnelManager) {
+            TransportProvider transportProvider, TunnelManager tunnelManager, Config config) {
         this.keyPair = keyPair;
         this.frameRouterEvents = frameRouterEvents;
         this.frameBuffer = frameBuffer;
@@ -44,6 +47,7 @@ public class DefaultFrameRouter implements FrameRouter {
         this.transportProvider = transportProvider;
         this.nodesManager = nodesManager;
         this.tunnelManager = tunnelManager;
+        this.config = config;
     }
 
     @Override
@@ -54,19 +58,28 @@ public class DefaultFrameRouter implements FrameRouter {
                 if (frame.getDstRoutingId() == keyPair.routingId()) {
                     MeshIncomingMessage message = meshMessageCodec.parseIncomingFrame(frame);
                     frameRouterEvents.transferMessageToApp(message);
-                    break;
-                }
-
-                // Checking that we aren't already distributing this frame
-                if (!frameBuffer.containsFrame(frame)) {
-                    // If we have connection to destination node we should immediatle send frame to
-                    // it without storing and redistributing
-                    if (nodesManager.checkConnectionToNode(frame.getDstRoutingId())) {
-                        transportProvider.sendFrame(frame, frame.getDstRoutingId());
+                } else {
+                    // Check if config allows us to transit someone's messages
+                    if (config.transitMode() == TransitMode.NONE) {
                         break;
                     }
-                    frameBuffer.addFrame(frame);
-                    transportProvider.sendFrameToEveryone(frame);
+
+                    // Checking that we aren't already distributing this frame
+                    if (!frameBuffer.containsFrame(frame)) {
+                        // If we have connection to destination node we should immediatle send frame to
+                        // it without storing and redistributing
+                        if (nodesManager.checkConnectionToNode(frame.getDstRoutingId())) {
+                            transportProvider.sendFrame(frame, frame.getDstRoutingId());
+                            break;
+                        }
+
+                        // Check if config allows us to store someone's messages
+                        if (config.transitMode() == TransitMode.STORE) {
+                            frameBuffer.addFrame(frame);
+                        }
+
+                        transportProvider.sendFrameToEveryone(frame);
+                    }
                 }
                 break;
             }
@@ -127,6 +140,11 @@ public class DefaultFrameRouter implements FrameRouter {
                                 prevNodeRoutingId);
                     }
                 } else {
+                    // Check if config allows us to be part of someone's tunnel
+                    if (config.tunnelMode() != TunnelMode.RELAY) {
+                        break;
+                    }
+
                     // Get src and dst routing ids from frame
                     long srcRoutingId = Ed25519KeyPair.generateRoutingId(frame.getSrcPubKey());
                     long dstRoutingId = frame.getDstRoutingId();

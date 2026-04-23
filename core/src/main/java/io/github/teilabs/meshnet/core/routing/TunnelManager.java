@@ -58,7 +58,7 @@ public interface TunnelManager {
      * @param tunnel pending tunnel to add
      * @throws RuntimeException if tunnel can't be opened
      */
-    void addPendingTunnel(Tunnel tunnel) throws RuntimeException;
+    void addPendingTunnel(Tunnel tunnel);
 
     /**
      * Removes pending tunnel. AppIds from given tunnel will be removed from existed

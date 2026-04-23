@@ -1,6 +1,7 @@
 package io.github.teilabs.meshnet.core.transport;
 
 import io.github.teilabs.meshnet.core.buffer.FrameBuffer;
+import io.github.teilabs.meshnet.core.config.Config;
 import io.github.teilabs.meshnet.core.crypto.CryptoProvider;
 import io.github.teilabs.meshnet.core.crypto.Ed25519KeyPair;
 import io.github.teilabs.meshnet.core.frame.Frame;
@@ -38,10 +39,13 @@ public class DefaultTransportProvider implements TransportProvider {
 
     private final FrameBuffer frameBuffer;
 
+    private final Config config;
+
     public DefaultTransportProvider(FrameCodec frameCodec, TransportMessageCodec transportMessageCodec,
             TransportProviderEvents transportProviderEvents, Ed25519KeyPair keyPair,
             HandShakePayloadCodec handShakePayloadCodec, CryptoProvider cryptoProvider,
-            AdvertisingPayloadCodec advertisingPayloadCodec, NodesManager nodesManager, FrameBuffer frameBuffer) {
+            AdvertisingPayloadCodec advertisingPayloadCodec, NodesManager nodesManager, FrameBuffer frameBuffer,
+            Config config) {
         this.frameCodec = frameCodec;
         this.transportMessageCodec = transportMessageCodec;
         this.transportProviderEvents = transportProviderEvents;
@@ -51,6 +55,7 @@ public class DefaultTransportProvider implements TransportProvider {
         this.advertisingPayloadCodec = advertisingPayloadCodec;
         this.nodesManager = nodesManager;
         this.frameBuffer = frameBuffer;
+        this.config = config;
     }
 
     @Override
@@ -80,7 +85,7 @@ public class DefaultTransportProvider implements TransportProvider {
         CompletableFuture<Boolean> future = new CompletableFuture<Boolean>();
         // Set handshake timeout with value from TransportProvider interafce, to prevent
         // infinite waiting
-        future.completeOnTimeout(false, HANDSHAKE_TIMEOUT_SEC, TimeUnit.SECONDS);
+        future.completeOnTimeout(false, config.handshakeTimeoutSec(), TimeUnit.SECONDS);
         future.whenComplete((result, throwable) -> {
             sendedHandshakes.remove(nodeRoutingId);
         });

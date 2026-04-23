@@ -7,6 +7,7 @@ import io.github.teilabs.meshnet.core.api.MeshOutgoingMessage;
 import io.github.teilabs.meshnet.core.buffer.FrameBuffer;
 import io.github.teilabs.meshnet.core.buffer.FrameBufferEvents;
 import io.github.teilabs.meshnet.core.buffer.PersistentFrameBuffer;
+import io.github.teilabs.meshnet.core.config.Config;
 import io.github.teilabs.meshnet.core.crypto.BouncyCastleCryptoProvider;
 import io.github.teilabs.meshnet.core.crypto.CryptoProvider;
 import io.github.teilabs.meshnet.core.crypto.Ed25519KeyPair;
@@ -38,6 +39,8 @@ import io.github.teilabs.meshnet.core.transport.handshake.HandShakePayloadCodec;
 public class MeshCore implements CoreInput {
     private final CoreEvents coreEvents;
 
+    private final Config config;
+
     private final FrameCodec frameCodec;
 
     private final CryptoProvider cryptoProvider;
@@ -62,8 +65,9 @@ public class MeshCore implements CoreInput {
 
     private final FrameRouter frameRouter;
 
-    public MeshCore(CoreEvents coreEvents) {
+    public MeshCore(CoreEvents coreEvents, Config config) {
         this.coreEvents = coreEvents;
+        this.config = config;
 
         this.frameCodec = new BinaryFrameCodec();
         this.cryptoProvider = new BouncyCastleCryptoProvider();
@@ -96,7 +100,7 @@ public class MeshCore implements CoreInput {
                 coreEvents.deleteFile(path);
             }
 
-        }, this.frameCodec);
+        }, this.frameCodec, this.config);
         this.transportProvider = new DefaultTransportProvider(frameCodec, transportMessageCodec,
                 new TransportProviderEvents() {
                     @Override
@@ -124,13 +128,13 @@ public class MeshCore implements CoreInput {
                         coreEvents.stopAdvertising();
                     }
                 }, this.keyPair, this.handShakePayloadCodec, this.cryptoProvider, this.advertisingPayloadCodec,
-                this.nodesManager, this.frameBuffer);
+                this.nodesManager, this.frameBuffer, this.config);
         this.tunnelManager = new HashMapTunnelManager(new TunnelManagerEvents() {
             @Override
             public boolean checkTunnelOpenAccess(Tunnel tunnel) {
                 return coreEvents.checkTunnelOpenAccess(tunnel);
             }
-        }, this.keyPair);
+        }, this.keyPair, this.config);
         this.meshMessageCodec = new DefaultMeshMessageCodec(this.cryptoProvider, this.frameCodec, this.keyPair);
         this.frameRouter = new DefaultFrameRouter(this.keyPair, new FrameRouterEvents() {
             @Override
@@ -141,8 +145,8 @@ public class MeshCore implements CoreInput {
                 }
                 coreEvents.transferMessageToApp(message);
             }
-        }, this.meshMessageCodec, this.cryptoProvider, this.frameCodec, this.frameBuffer,
-                this.nodesManager, this.transportProvider, this.tunnelManager);
+        }, this.meshMessageCodec, this.frameBuffer, this.nodesManager, this.transportProvider, this.tunnelManager,
+                this.config);
     }
 
     @Override
