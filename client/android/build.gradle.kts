@@ -9,7 +9,6 @@ android {
 
     defaultConfig {
         minSdk = 26
-        // Убрана testInstrumentationRunner — она триггерит androidTest
         consumerProguardFiles("consumer-rules.pro")
     }
 
@@ -44,7 +43,6 @@ android {
         disable += "UnusedResources"
     }
 
-    // === FIX: новый DSL для packaging (AGP 8.0+) ===
     packaging {
         resources {
             excludes += listOf(
@@ -63,7 +61,6 @@ android {
     }
 }
 
-// === FIX: отключаем androidTest через правильный API ===
 androidComponents {
     beforeVariants { variantBuilder ->
         variantBuilder.enableAndroidTest = false
