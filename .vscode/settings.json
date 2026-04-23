@@ -8,6 +8,13 @@
     "org.*",
     "com.*"
   ],
-  "java.jdt.ls.java.home": null,
-  "java.server.launchMode": "Standard"
+  "java.server.launchMode": "Standard",
+  "java.jdt.ls.java.home": "/opt/jdk-17.0.9+9",
+  "java.configuration.runtimes": [
+    {
+      "name": "JavaSE-17",
+      "path": "/opt/jdk-17.0.9+9",
+      "default": true
+    }
+  ]
 }
