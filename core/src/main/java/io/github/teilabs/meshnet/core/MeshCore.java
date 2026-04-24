@@ -45,7 +45,7 @@ public class MeshCore implements CoreInput {
 
     private final CryptoProvider cryptoProvider;
 
-    private Ed25519KeyPair keyPair;
+    private final Ed25519KeyPair keyPair;
 
     private final NodesManager nodesManager;
 
@@ -135,7 +135,7 @@ public class MeshCore implements CoreInput {
             @Override
             public void transferMessageToApp(MeshIncomingMessage message) {
                 if (message.getDstAppId() == 0) {
-                    // TODO: proccess it by core
+                    // TODO: process it by core
                     return;
                 }
                 coreEvents.transferMessageToApp(message);

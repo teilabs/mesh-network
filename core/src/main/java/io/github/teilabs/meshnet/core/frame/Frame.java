@@ -63,7 +63,7 @@ public final class Frame {
 
     /**
      * Ed25519 signature of this Frame header (part of frame, see
-     * {@link FrameCodec.serializeHeader} implementations).
+     * {@link FrameCodec#serializeHeader} implementations).
      */
     private final byte[] signature;
 

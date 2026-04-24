@@ -14,7 +14,7 @@ public interface TransportProviderEvents {
     void sendBytesToEveryone(byte[] bytes);
 
     /**
-     * Proccesses the {@link Frame} received from a specific node.
+     * Processes the {@link Frame} received from a specific node.
      *
      * @param frame             received frame
      * @param prevNodeRoutingId routing id of the node that sent the frame

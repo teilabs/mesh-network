@@ -7,7 +7,7 @@ public interface AdvertisingPayloadCodec {
     /**
      * Serializes {@link AdvertisingPayload} to bytes.
      * 
-     * @param message AdvertisingPayload to serialize.
+     * @param advertisingPayload AdvertisingPayload to serialize.
      * @return Serialized AdvertisingPayload bytes.
      */
     byte[] serialize(AdvertisingPayload advertisingPayload);

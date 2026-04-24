@@ -25,7 +25,7 @@ public class PersistentFrameBuffer implements FrameBuffer {
         this.frameCodec = frameCodec;
         this.config = config;
 
-        // List all sved frames
+        // List all saved frames
         String[] files = this.frameBufferEvents.listFiles(this.config.storedFramesFolderPath());
         // For each frame parse it from bytes and put in set
         for (int i = 0; i < files.length; i++) {
@@ -42,7 +42,7 @@ public class PersistentFrameBuffer implements FrameBuffer {
             throw new IllegalArgumentException("Frame already stored");
         }
 
-        // Remooves oldest stored frame until count of frames is less than MAX_FRAMES
+        // Removes oldest stored frame until count of frames is less than MAX_FRAMES
         while (frames.size() >= config.maxStoredFrames()) {
             Frame firstFrame = frames.iterator().next();
             frameBufferEvents.deleteFile(config.storedFramesFolderPath() + firstFrame.hashCode() + ".bin");

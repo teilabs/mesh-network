@@ -14,7 +14,7 @@ public interface CoreInput {
     void onBytesReceived(byte[] bytes);
 
     /**
-     * Called by daemon when app want to send messgae through mesh network.
+     * Called by daemon when app want to send message through mesh network.
      * 
      * @param message message that app want to send
      */

@@ -1,15 +1,15 @@
 package io.github.teilabs.meshnet.core.api;
 
+import io.github.teilabs.meshnet.core.frame.Frame;
 import io.github.teilabs.meshnet.core.frame.FrameConstants;
 import java.util.Arrays;
 
 /**
- * Represents incoming {@link Frame} by storing only neccessary fields to give it to app
+ * Represents incoming {@link Frame} by storing only necessary fields to give it to app
  * through client library.
  */
 public final class MeshIncomingMessage {
     /** Timestamp of Frame creation on source device. */
-
     private final int timestamp;
 
     /** Id of application that initialized this Frame sending from source device. */
@@ -59,7 +59,7 @@ public final class MeshIncomingMessage {
         return srcPubKey.clone();
     }
 
-    public byte[] getdata() {
+    public byte[] getData() {
         return data.clone();
     }
 

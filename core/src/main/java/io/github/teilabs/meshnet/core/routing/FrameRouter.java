@@ -3,7 +3,7 @@ package io.github.teilabs.meshnet.core.routing;
 import io.github.teilabs.meshnet.core.frame.Frame;
 
 /**
- * Interface for managing incoming and outgoin {@link Frame frames}.
+ * Interface for managing incoming and outgoing {@link Frame frames}.
  */
 public interface FrameRouter {
     /**

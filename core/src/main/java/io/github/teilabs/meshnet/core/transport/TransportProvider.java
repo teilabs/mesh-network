@@ -1,11 +1,12 @@
 package io.github.teilabs.meshnet.core.transport;
 
+import io.github.teilabs.meshnet.core.config.Config;
 import io.github.teilabs.meshnet.core.frame.Frame;
 import java.util.concurrent.CompletableFuture;
 
 /**
  * Interface for managing all data incoming from other nodes and all data going
- * to toher nodes.
+ * to other nodes.
  */
 public interface TransportProvider {
     /**
@@ -28,10 +29,10 @@ public interface TransportProvider {
      * 
      * @param nodeRoutingId routing id of the node to send to
      * @return a future that will be completed when the response handshake is
-     *         recieved with true, or with false if response handshake isn't
-     *         recieved in {@value #HANDSHAKE_TIMEOUT_SEC} seconds.
+     *         received with true, or with false if response handshake isn't
+     *         received in {@link Config#handshakeTimeoutSec} seconds.
      */
-    CompletableFuture<Boolean> sendHandhsake(long nodeRoutingId);
+    CompletableFuture<Boolean> sendHandshake(long nodeRoutingId);
 
     /**
      * Starts advertising with a specific interval between messages.

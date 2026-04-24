@@ -3,7 +3,7 @@ package io.github.teilabs.meshnet.core.config;
 import io.github.teilabs.meshnet.core.frame.Frame;
 
 /**
- * Interface for getting configuration values setted up in client app.
+ * Interface for getting configuration values set up in client app.
  */
 public interface Config {
     /**
@@ -11,7 +11,7 @@ public interface Config {
      * frames} when
      * this node isn't final destination.
      */
-    public enum TransitMode {
+    enum TransitMode {
         /**
          * No transit, frame will be dropped
          */
@@ -21,7 +21,7 @@ public interface Config {
          */
         RELAY,
         /**
-         * Frame will be transited and stored fro destribution
+         * Frame will be transited and stored fro distribution
          */
         STORE
     }
@@ -32,7 +32,7 @@ public interface Config {
      * this node isn't final destination. Does not apply to frames in tunnels opened
      * before mode changing.
      */
-    public enum TunnelMode {
+    enum TunnelMode {
         /**
          * Reject tunnel opening through this node
          */
@@ -44,7 +44,7 @@ public interface Config {
     }
 
     /**
-     * @return configured timeout before handshke will fail with timeout
+     * @return configured timeout before handshake will fail with timeout
      */
     int handshakeTimeoutSec();
 

@@ -21,7 +21,7 @@ public class BinaryTransportMessageCodec implements TransportMessageCodec {
                 return buffer.array();
             }
             default:
-                throw new IllegalArgumentException("Unsopported transport message version.");
+                throw new IllegalArgumentException("Unsupported transport message version.");
         }
     }
 
@@ -46,7 +46,7 @@ public class BinaryTransportMessageCodec implements TransportMessageCodec {
                         payload);
             }
             default:
-                throw new IllegalArgumentException("Unsopported transport mesage version.");
+                throw new IllegalArgumentException("Unsupported transport message version.");
         }
     }
 

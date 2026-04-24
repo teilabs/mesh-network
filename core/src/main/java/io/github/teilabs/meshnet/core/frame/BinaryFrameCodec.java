@@ -39,7 +39,7 @@ public class BinaryFrameCodec implements FrameCodec {
                         encryptedData);
             }
             default:
-                throw new IllegalArgumentException("Unsopported frame version.");
+                throw new IllegalArgumentException("Unsupported frame version.");
         }
     }
 
@@ -68,7 +68,7 @@ public class BinaryFrameCodec implements FrameCodec {
                 return buffer.array();
             }
             default:
-                throw new IllegalArgumentException("Unsopported frame version.");
+                throw new IllegalArgumentException("Unsupported frame version.");
         }
     }
 
@@ -94,7 +94,7 @@ public class BinaryFrameCodec implements FrameCodec {
                 return buffer.array();
             }
             default:
-                throw new IllegalArgumentException("Unsopported frame version.");
+                throw new IllegalArgumentException("Unsupported frame version.");
         }
     }
 }

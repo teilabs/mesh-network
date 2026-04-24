@@ -14,7 +14,7 @@ public final class DefaultMeshMessageCodec implements MeshMessageCodec {
 
     private final FrameCodec frameCodec;
 
-    private Ed25519KeyPair keyPair;
+    private final Ed25519KeyPair keyPair;
 
     public DefaultMeshMessageCodec(CryptoProvider cryptoProvider, FrameCodec frameCodec, Ed25519KeyPair keyPair) {
         this.cryptoProvider = cryptoProvider;
@@ -55,7 +55,7 @@ public final class DefaultMeshMessageCodec implements MeshMessageCodec {
         byte[] signature = cryptoProvider.sign(serializedHeader,
                 keyPair.privateKey());
         byte[] encryptedData = cryptoProvider.encrypt(message.getDstPubKey(), nonce, serializedHeader,
-                message.getdata());
+                message.getData());
 
         return new Frame(
                 version, type, timestamp, srcAppId, dstAppId, srcPubKey, dstRoutingId, nonce, direction, signature,

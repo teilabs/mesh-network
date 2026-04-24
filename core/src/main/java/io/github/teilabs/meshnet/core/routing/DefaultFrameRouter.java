@@ -20,7 +20,7 @@ import java.util.Set;
  * Default implementation of {@link FrameRouter}.
  */
 public class DefaultFrameRouter implements FrameRouter {
-    private Ed25519KeyPair keyPair;
+    private final Ed25519KeyPair keyPair;
 
     private final FrameRouterEvents frameRouterEvents;
 
@@ -66,7 +66,7 @@ public class DefaultFrameRouter implements FrameRouter {
 
                     // Checking that we aren't already distributing this frame
                     if (!frameBuffer.containsFrame(frame)) {
-                        // If we have connection to destination node we should immediatle send frame to
+                        // If we have connection to destination node we should immediately send frame to
                         // it without storing and redistributing
                         if (nodesManager.checkConnectionToNode(frame.getDstRoutingId())) {
                             transportProvider.sendFrame(frame, frame.getDstRoutingId());
@@ -202,7 +202,7 @@ public class DefaultFrameRouter implements FrameRouter {
                 if (frame.getDstRoutingId() == keyPair.routingId()) {
                     validateTunnelFrame(frame, prevNodeRoutingId);
 
-                    // If we are final destination, notify destination app that frame recieved
+                    // If we are final destination, notify destination app that frame received
                     frameRouterEvents.transferMessageToApp(meshMessageCodec.parseIncomingFrame(frame));
                     // TODO: maybe send ack
                 } else {
@@ -213,7 +213,7 @@ public class DefaultFrameRouter implements FrameRouter {
 
                     validateTunnelFrame(frame, tunnelId, prevNodeRoutingId);
 
-                    // Deermine which node should be next by excluding the previous node from our
+                    // Determine which node should be next by excluding the previous node from our
                     // tunnel neighbours and send frame to it
                     long nextRoutingId = tunnel.getNextRoutingId() != prevNodeRoutingId ? tunnel.getNextRoutingId()
                             : tunnel.getPrevRoutingId();
@@ -290,7 +290,7 @@ public class DefaultFrameRouter implements FrameRouter {
                             .removeTunnel(new Tunnel(tunnel.getEndpoint1RoutingId(), tunnel.getEndpoint2RoutingId(),
                                     tunnel.getPrevRoutingId(), tunnel.getNextRoutingId(), appIds));
 
-                    // Deermine which node should be next by excluding the previous node from our
+                    // Determine which node should be next by excluding the previous node from our
                     // tunnel neighbours and send frame to it
                     long nextRoutingId = tunnel.getNextRoutingId() != prevNodeRoutingId ? tunnel.getNextRoutingId()
                             : tunnel.getPrevRoutingId();
@@ -307,7 +307,7 @@ public class DefaultFrameRouter implements FrameRouter {
             case Frame.TYPE_DATA: {
                 // Checking that we aren't already distributing this frame
                 if (!frameBuffer.containsFrame(frame)) {
-                    // If we have connection to destination node we should immediatle send frame to
+                    // If we have connection to destination node we should immediately send frame to
                     // it without storing and redistributing
                     if (nodesManager.checkConnectionToNode(frame.getDstRoutingId())) {
                         transportProvider.sendFrame(frame, frame.getDstRoutingId());
@@ -397,7 +397,7 @@ public class DefaultFrameRouter implements FrameRouter {
     }
 
     /**
-     * Validates that frame sended through the tunnel truly belongs to this tunnel
+     * Validates that frame sent through the tunnel truly belongs to this tunnel
      * 
      * @param frame             frame from the tunnel
      * @param prevNodeRoutingId routing id of the node from which we received the
@@ -411,7 +411,7 @@ public class DefaultFrameRouter implements FrameRouter {
     }
 
     /**
-     * Validates that frame sended through the tunnel truly belongs to this tunnel
+     * Validates that frame sent through the tunnel truly belongs to this tunnel
      * 
      * @param frame             frame from the tunnel
      * @param tunnelId          id of the tunnel
@@ -444,7 +444,7 @@ public class DefaultFrameRouter implements FrameRouter {
 
         // If prevNodeRoutingId not equal to tunnel's next node routing id or prev
         // routing id, then it's not our neighbour int the tunnel, so it hasn't got
-        // permissiopn to send us the frame in this tunnel
+        // permission to send us the frame in this tunnel
         if (tunnel.getNextRoutingId() != prevNodeRoutingId && tunnel.getPrevRoutingId() != prevNodeRoutingId) {
             throw new IllegalArgumentException("Node " + prevNodeRoutingId + " is not part of tunnel " + tunnelId);
         }

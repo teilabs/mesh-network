@@ -6,7 +6,7 @@ import io.github.teilabs.meshnet.core.frame.FrameConstants;
 import java.util.Arrays;
 
 /**
- * Repsresents message that will be converted to {@link Frame} and sended to
+ * Represents message that will be converted to {@link Frame} and sent to
  * destination device.
  * <br>
  * Client library gives this class to {@link MeshCore} when app initialize
@@ -117,7 +117,7 @@ public final class MeshOutgoingMessage {
         return dstPubKey;
     }
 
-    public byte[] getdata() {
+    public byte[] getData() {
         return data.clone();
     }
 

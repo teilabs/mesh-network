@@ -49,7 +49,7 @@ public class HashMapTunnelManager implements TunnelManager {
         if ((tunnel.getEndpoint2RoutingId() == keyPair.routingId()
                 || tunnel.getEndpoint1RoutingId() == keyPair.routingId())
                 && !tunnelManagerEvents.checkTunnelOpenAccess(tunnel)) {
-            throw new RuntimeException("Tunnel open acces denied");
+            throw new RuntimeException("Tunnel open access denied");
         }
 
         tunnels.computeIfPresent(
@@ -58,12 +58,12 @@ public class HashMapTunnelManager implements TunnelManager {
                     // If tunnel with this tunnelId already exists, we should add all new app pairs
                     // to it and rewrite it in storage
                     Set<Pair<Short, Short>> appIds = Collections.synchronizedSet(v.getAppIds());
-                    tunnel.getAppIds().forEach((p) -> appIds.add(p));
+                    appIds.addAll(tunnel.getAppIds());
                     return new Tunnel(v.getEndpoint1RoutingId(), v.getEndpoint2RoutingId(), v.getPrevRoutingId(),
                             v.getNextRoutingId(), appIds);
                 });
-        tunnels.computeIfAbsent(Tunnel.generateTunnelId(tunnel.getEndpoint1RoutingId(), tunnel.getEndpoint2RoutingId()),
-                k -> tunnel);
+        tunnels.putIfAbsent(Tunnel.generateTunnelId(tunnel.getEndpoint1RoutingId(), tunnel.getEndpoint2RoutingId()),
+                tunnel);
     }
 
     @Override
@@ -115,13 +115,13 @@ public class HashMapTunnelManager implements TunnelManager {
                     // If tunnel with this tunnelId already exists, we should add all new app pairs
                     // to it and rewrite it in storage
                     Set<Pair<Short, Short>> appIds = Collections.synchronizedSet(v.getAppIds());
-                    tunnel.getAppIds().forEach((p) -> appIds.add(p));
+                    appIds.addAll(tunnel.getAppIds());
                     return new Tunnel(v.getEndpoint1RoutingId(), v.getEndpoint2RoutingId(), v.getPrevRoutingId(),
                             v.getNextRoutingId(), appIds);
                 });
-        pendingTunnels.computeIfAbsent(
+        pendingTunnels.putIfAbsent(
                 Tunnel.generateTunnelId(tunnel.getEndpoint1RoutingId(), tunnel.getEndpoint2RoutingId()),
-                k -> tunnel);
+                tunnel);
     }
 
     @Override

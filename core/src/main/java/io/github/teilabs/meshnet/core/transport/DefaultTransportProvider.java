@@ -25,7 +25,7 @@ public class DefaultTransportProvider implements TransportProvider {
 
     private final TransportProviderEvents transportProviderEvents;
 
-    private final Map<Long, CompletableFuture<Boolean>> sendedHandshakes = new ConcurrentHashMap<Long, CompletableFuture<Boolean>>();
+    private final Map<Long, CompletableFuture<Boolean>> sentHandshakes = new ConcurrentHashMap<Long, CompletableFuture<Boolean>>();
 
     private final Ed25519KeyPair keyPair;
 
@@ -81,26 +81,26 @@ public class DefaultTransportProvider implements TransportProvider {
     }
 
     @Override
-    public CompletableFuture<Boolean> sendHandhsake(long nodeRoutingId) {
+    public CompletableFuture<Boolean> sendHandshake(long nodeRoutingId) {
         CompletableFuture<Boolean> future = new CompletableFuture<Boolean>();
-        // Set handshake timeout with value from TransportProvider interafce, to prevent
+        // Set handshake timeout with value from TransportProvider interface, to prevent
         // infinite waiting
         future.completeOnTimeout(false, config.handshakeTimeoutSec(), TimeUnit.SECONDS);
         future.whenComplete((result, throwable) -> {
-            sendedHandshakes.remove(nodeRoutingId);
+            sentHandshakes.remove(nodeRoutingId);
         });
 
-        // Strore handshake to understand in future if received handshake is response or
+        // Store handshake to understand in future if received handshake is response or
         // request
-        sendedHandshakes.put(nodeRoutingId, future);
+        sentHandshakes.put(nodeRoutingId, future);
 
-        sendHandhsakePayload(nodeRoutingId);
+        sendHandshakePayload(nodeRoutingId);
         return future;
     }
 
     @Override
     public void startAdvertising(int intervalMs) {
-        // Create advertizing payload with signed node info and pack it into the
+        // Create advertising payload with signed node info and pack it into the
         // transport message
         AdvertisingPayload advertisingPayload = new AdvertisingPayload(keyPair.publicKey(),
                 cryptoProvider.sign(keyPair.publicKey(), keyPair.privateKey()));
@@ -136,19 +136,19 @@ public class DefaultTransportProvider implements TransportProvider {
                     throw new IllegalArgumentException("Invalid signature. Author prove failed");
                 }
 
-                // Check if this is respone to our handshake or request for a new handshak
-                if (sendedHandshakes.containsKey(Ed25519KeyPair.generateRoutingId(handShakePayload.getSrcPubKey()))) {
+                // Check if this is response to our handshake or request for a new handshak
+                if (sentHandshakes.containsKey(Ed25519KeyPair.generateRoutingId(handShakePayload.getSrcPubKey()))) {
                     // Add node to nodes manager, because it can be not stored
                     addNode(message.getSenderRoutingId());
 
                     // Complete stored future with true, because handshake was successful
-                    sendedHandshakes.get(Ed25519KeyPair.generateRoutingId(handShakePayload.getSrcPubKey()))
+                    sentHandshakes.get(Ed25519KeyPair.generateRoutingId(handShakePayload.getSrcPubKey()))
                             .complete(true);
                 } else {
                     // Add node to nodes manager, because it can be not stored
                     addNode(message.getSenderRoutingId());
                     // Send handshake response to node that requested it
-                    sendHandhsakePayload(Ed25519KeyPair.generateRoutingId(handShakePayload.getSrcPubKey()));
+                    sendHandshakePayload(Ed25519KeyPair.generateRoutingId(handShakePayload.getSrcPubKey()));
                 }
                 break;
             }
@@ -167,13 +167,13 @@ public class DefaultTransportProvider implements TransportProvider {
                 // If verification passed, add node to nodes manager
                 addNode(message.getSenderRoutingId());
                 // Send handshake to advertising node to give info about our node
-                sendHandhsakePayload(message.getSenderRoutingId());
+                sendHandshakePayload(message.getSenderRoutingId());
                 break;
             }
         }
     }
 
-    private void sendHandhsakePayload(long nodeRoutingId) {
+    private void sendHandshakePayload(long nodeRoutingId) {
         // Create handshake payload with signed node info and pack it into the transport
         // message
         HandShakePayload handShakePayload = new HandShakePayload(keyPair.publicKey(),
