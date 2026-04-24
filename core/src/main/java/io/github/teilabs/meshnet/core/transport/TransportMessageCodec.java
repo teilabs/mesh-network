@@ -1,7 +1,8 @@
 package io.github.teilabs.meshnet.core.transport;
 
 /**
- * Interface for parsing and serializing {@link TransportMessage} according to its version.
+ * Interface for parsing and serializing {@link TransportMessage} according to
+ * its version.
  */
 public interface TransportMessageCodec {
     /**

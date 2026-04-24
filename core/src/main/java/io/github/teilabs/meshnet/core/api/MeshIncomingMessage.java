@@ -5,7 +5,8 @@ import io.github.teilabs.meshnet.core.frame.FrameConstants;
 import java.util.Arrays;
 
 /**
- * Represents incoming {@link Frame} by storing only necessary fields to give it to app
+ * Represents incoming {@link Frame} by storing only necessary fields to give it
+ * to app
  * through client library.
  */
 public final class MeshIncomingMessage {

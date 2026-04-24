@@ -8,7 +8,8 @@ import org.bouncycastle.crypto.signers.Ed25519Signer;
  * Class for Ed25519 signing and verification.
  */
 public final class Ed25519Crypto {
-    private Ed25519Crypto() {}
+    private Ed25519Crypto() {
+    }
 
     /**
      * Signs bytes with private key.
@@ -39,7 +40,7 @@ public final class Ed25519Crypto {
 
         signer.init(false, new Ed25519PublicKeyParameters(publicKey));
         signer.update(data, 0, data.length);
-        
+
         return signer.verifySignature(signature);
     }
 }

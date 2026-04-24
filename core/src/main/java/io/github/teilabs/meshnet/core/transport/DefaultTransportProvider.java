@@ -136,7 +136,7 @@ public class DefaultTransportProvider implements TransportProvider {
                     throw new IllegalArgumentException("Invalid signature. Author prove failed");
                 }
 
-                // Check if this is response to our handshake or request for a new handshak
+                // Check if this is response to our handshake or request for a new handshake
                 if (sentHandshakes.containsKey(Ed25519KeyPair.generateRoutingId(handShakePayload.getSrcPubKey()))) {
                     // Add node to nodes manager, because it can be not stored
                     addNode(message.getSenderRoutingId());

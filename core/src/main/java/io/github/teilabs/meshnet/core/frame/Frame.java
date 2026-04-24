@@ -4,11 +4,12 @@ import io.github.teilabs.meshnet.core.crypto.Ed25519KeyPair;
 import java.util.Arrays;
 
 /**
- * Class for incoming and outgoing messages.
+ * Class for all messages sent between nodes that contains data that app sends
+ * or tunnel open/close requests (that are in fact initiated by app).
  */
 public final class Frame {
     /**
-     * Simple Frame that distributes through all neighbours and stores in memory for
+     * Simple Frame that distributes through all neighbors and stores in memory for
      * future distributing.
      */
     public static final byte TYPE_DATA = 0;

@@ -5,11 +5,11 @@ import java.util.Arrays;
 
 public final class TransportMessage {
     /**
-     * Message used to check connection status between this node and neighbour node.
+     * Message used to check connection status between this node and neighbor node.
      */
     public static final byte TYPE_HANDSHAKE = 0;
     /**
-     * Message used to transfer frame between this node and neighbour node.
+     * Message used to transfer frame between this node and neighbor node.
      */
     public static final byte TYPE_FRAME = 1;
     /**
@@ -70,7 +70,7 @@ public final class TransportMessage {
         if (type == TYPE_ADVERTISING) {
             if (targetRoutingId != 0) {
                 throw new IllegalArgumentException(
-                        "Advertising message must taget routing id equaled 0.");
+                        "Advertising message must target routing id equaled 0.");
             }
         }
     }

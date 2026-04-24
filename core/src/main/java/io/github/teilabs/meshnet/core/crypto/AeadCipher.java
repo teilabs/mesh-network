@@ -8,7 +8,8 @@ import org.bouncycastle.crypto.params.KeyParameter;
  * Class for encrypting and decrypting bytes with ChaCha20-Poly1305.
  */
 public final class AeadCipher {
-    private AeadCipher() {}
+    private AeadCipher() {
+    }
 
     /**
      * Encrypts bytes.

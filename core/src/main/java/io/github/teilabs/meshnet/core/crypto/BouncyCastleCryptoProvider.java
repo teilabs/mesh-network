@@ -33,5 +33,4 @@ public final class BouncyCastleCryptoProvider implements CryptoProvider {
     public byte[] generateNonce() {
         return NonceGenerator.generate();
     }
-
 }

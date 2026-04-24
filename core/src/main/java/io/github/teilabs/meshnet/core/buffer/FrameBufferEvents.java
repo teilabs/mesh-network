@@ -19,7 +19,7 @@ public interface FrameBufferEvents {
      * 
      * @param path The path to the file.
      * @return The data read from the file.
-     * @throws IOException 
+     * @throws IOException if the file reading failed.
      */
     byte[] readFile(String path) throws IOException;
 

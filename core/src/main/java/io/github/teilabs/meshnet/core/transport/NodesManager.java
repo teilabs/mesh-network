@@ -20,10 +20,11 @@ public interface NodesManager {
     void removeNode(long nodeRoutingId);
 
     /**
-     * Checks if this node have direct connection to the neighbour node.
+     * Checks if this node have direct connection to the neighbor node.
      * 
-     * @param nodeRoutingId The routing ID of the neighbour node.
-     * @return true - if this node have direct connection to the neighbour node, false - otherwise.
+     * @param nodeRoutingId The routing ID of the neighbor node.
+     * @return true - if this node have direct connection to the neighbor node,
+     *         false - otherwise.
      */
     boolean checkConnectionToNode(long nodeRoutingId);
 }

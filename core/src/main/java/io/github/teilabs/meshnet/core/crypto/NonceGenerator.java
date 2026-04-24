@@ -9,7 +9,8 @@ import java.security.SecureRandom;
 public class NonceGenerator {
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
-    private NonceGenerator() {}
+    private NonceGenerator() {
+    }
 
     /**
      * Generates nonce for {@link io.github.teilabs.meshnet.core.frame.Frame}.

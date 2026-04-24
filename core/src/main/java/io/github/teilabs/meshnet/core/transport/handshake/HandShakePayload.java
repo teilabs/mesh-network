@@ -3,6 +3,9 @@ package io.github.teilabs.meshnet.core.transport.handshake;
 import io.github.teilabs.meshnet.core.frame.FrameConstants;
 import java.util.Arrays;
 
+/**
+ * Class for all messages that are used for handshakes.
+ */
 public final class HandShakePayload {
     /** Ed25519 public key of source device. */
     private final byte[] srcPubKey;

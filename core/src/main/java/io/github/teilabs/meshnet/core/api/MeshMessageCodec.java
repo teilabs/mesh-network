@@ -2,7 +2,10 @@ package io.github.teilabs.meshnet.core.api;
 
 import io.github.teilabs.meshnet.core.frame.Frame;
 
-/** Interface for converting {@link Frame} to {@link MeshIncomingMessage} and {@link MeshOutgoingMessage} to {@link Frame}. */
+/**
+ * Interface for converting {@link Frame} to {@link MeshIncomingMessage} and
+ * {@link MeshOutgoingMessage} to {@link Frame}.
+ */
 public interface MeshMessageCodec {
     /**
      * Parse a {@link Frame} to {@link MeshIncomingMessage}.
