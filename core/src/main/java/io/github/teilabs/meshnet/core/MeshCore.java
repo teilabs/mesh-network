@@ -32,6 +32,7 @@ import io.github.teilabs.meshnet.core.transport.advertising.AdvertisingPayloadCo
 import io.github.teilabs.meshnet.core.transport.advertising.BinaryAdvertisingPayloadCodec;
 import io.github.teilabs.meshnet.core.transport.handshake.BinaryHandShakePayloadCodec;
 import io.github.teilabs.meshnet.core.transport.handshake.HandShakePayloadCodec;
+import java.io.IOException;
 
 /**
  * Main class that provides communication between the daemon and other classes.
@@ -86,7 +87,7 @@ public class MeshCore implements CoreInput {
             }
 
             @Override
-            public byte[] readFile(String path) {
+            public byte[] readFile(String path) throws IOException {
                 return coreEvents.readFile(path);
             }
 

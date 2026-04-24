@@ -1,5 +1,7 @@
 package io.github.teilabs.meshnet.core.buffer;
 
+import java.io.IOException;
+
 /**
  * Functions that {@link FrameBuffer} can call.
  */
@@ -17,8 +19,9 @@ public interface FrameBufferEvents {
      * 
      * @param path The path to the file.
      * @return The data read from the file.
+     * @throws IOException 
      */
-    byte[] readFile(String path);
+    byte[] readFile(String path) throws IOException;
 
     /**
      * Lists the files in a folder.

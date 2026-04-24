@@ -3,6 +3,7 @@ package io.github.teilabs.meshnet.core.buffer;
 import io.github.teilabs.meshnet.core.config.Config;
 import io.github.teilabs.meshnet.core.frame.Frame;
 import io.github.teilabs.meshnet.core.frame.FrameCodec;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -29,9 +30,13 @@ public class PersistentFrameBuffer implements FrameBuffer {
         String[] files = this.frameBufferEvents.listFiles(this.config.storedFramesFolderPath());
         // For each frame parse it from bytes and put in set
         for (int i = 0; i < files.length; i++) {
-            byte[] bytes = this.frameBufferEvents.readFile(this.config.storedFramesFolderPath() + files[i]);
-            Frame parsedFrame = this.frameCodec.parse(bytes);
-            frames.add(parsedFrame);
+            try {
+                byte[] bytes = this.frameBufferEvents.readFile(this.config.storedFramesFolderPath() + files[i]);
+                Frame parsedFrame = this.frameCodec.parse(bytes);
+                frames.add(parsedFrame);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     }
 

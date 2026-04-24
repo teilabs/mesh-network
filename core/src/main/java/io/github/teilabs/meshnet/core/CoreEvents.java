@@ -1,5 +1,7 @@
 package io.github.teilabs.meshnet.core;
 
+import java.io.IOException;
+
 import io.github.teilabs.meshnet.core.api.MeshIncomingMessage;
 import io.github.teilabs.meshnet.core.crypto.Ed25519KeyPair;
 import io.github.teilabs.meshnet.core.routing.Tunnel;
@@ -66,7 +68,7 @@ public interface CoreEvents {
      * @param path The path to the file.
      * @return The data read from the file.
      */
-    byte[] readFile(String path);
+    byte[] readFile(String path) throws IOException;
 
     /**
      * Lists the files in a folder.
