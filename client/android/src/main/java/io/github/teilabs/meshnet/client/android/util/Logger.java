@@ -6,7 +6,6 @@ public final class Logger {
     private static final String TAG_PREFIX = "MeshNet.";
 
     private Logger() {
-
     }
 
     public static void d(String tag, String message) {

@@ -27,11 +27,13 @@ public final class CoreBridge implements CoreEvents {
 
     private final AndroidKeyStorage androidKeyStorage;
 
-//    private final SdkSockerServer sdkSockerServer;
+    // private final SdkSocketServer sdkSocketServer;
 
     public CoreBridge(Context context, Config config) {
-        if (context == null) throw new IllegalArgumentException("Context cannot be null");
-        if (config == null) throw new IllegalArgumentException("Config cannot be null");
+        if (context == null)
+            throw new IllegalArgumentException("Context cannot be null");
+        if (config == null)
+            throw new IllegalArgumentException("Config cannot be null");
 
         this.context = context.getApplicationContext();
         this.config = config;
@@ -42,13 +44,13 @@ public final class CoreBridge implements CoreEvents {
 
     public void start() {
         Logger.i(TAG, "Starting core bridge");
-//        sdkSockerServer.start();
+        // sdkSocketServer.start();
         daemonSocketClient.start();
     }
 
     public void stop() {
         Logger.i(TAG, "Stopping core bridge");
-//        sdkSockerServer.close();
+        // sdkSocketServer.close();
         daemonSocketClient.stop();
     }
 
@@ -57,18 +59,26 @@ public final class CoreBridge implements CoreEvents {
         try {
             daemonSocketClient.send(bytes);
         } catch (IOException e) {
-            Logger.e(TAG, "Failed to send to daemon", e);
+            Logger.e(TAG, "Failed to send data message to daemon", e);
         }
     }
 
     @Override
     public void startAdvertising(byte[] bytes, int intervalMs) {
-
+        try {
+            daemonSocketClient.startAdvertising(bytes, intervalMs);
+        } catch (IOException e) {
+            Logger.e(TAG, "Failed to send start advertising message to daemon", e);
+        }
     }
 
     @Override
     public void stopAdvertising() {
-
+        try {
+            daemonSocketClient.stopAdvertising();
+        } catch (IOException e) {
+            Logger.e(TAG, "Failed to send stop advertising message to daemon", e);
+        }
     }
 
     @Override

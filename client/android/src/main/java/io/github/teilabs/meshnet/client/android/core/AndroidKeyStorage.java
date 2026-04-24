@@ -29,8 +29,7 @@ public final class AndroidKeyStorage {
                     PREF_NAME,
                     masterKey,
                     EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
-                    EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
-            );
+                    EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM);
         } catch (Exception e) {
             Logger.e(TAG, "Failed to initialize EncryptedSharedPreferences", e);
             throw new RuntimeException(e);
