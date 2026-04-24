@@ -7,14 +7,6 @@ import io.github.teilabs.meshnet.core.frame.Frame;
  */
 public interface TransportProviderEvents {
     /**
-     * Sends bytes to a specific node.
-     *
-     * @param bytes         bytes to send
-     * @param nodeRoutingId routing id of the node to send bytes to
-     */
-    void sendBytes(byte[] bytes, long nodeRoutingId);
-
-    /**
      * Sends bytes to everyone.
      *
      * @param bytes bytes to send

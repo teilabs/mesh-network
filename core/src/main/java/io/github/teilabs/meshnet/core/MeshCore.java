@@ -104,11 +104,6 @@ public class MeshCore implements CoreInput {
         this.transportProvider = new DefaultTransportProvider(frameCodec, transportMessageCodec,
                 new TransportProviderEvents() {
                     @Override
-                    public void sendBytes(byte[] bytes, long nodeRoutingId) {
-                        coreEvents.sendBytes(bytes, nodeRoutingId);
-                    }
-
-                    @Override
                     public void sendBytesToEveryone(byte[] bytes) {
                         coreEvents.sendBytesToEveryone(bytes);
                     }

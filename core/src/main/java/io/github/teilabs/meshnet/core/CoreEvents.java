@@ -9,14 +9,6 @@ import io.github.teilabs.meshnet.core.routing.Tunnel;
  */
 public interface CoreEvents {
     /**
-     * Sends bytes to the specific node.
-     *
-     * @param bytes         bytes to send
-     * @param nodeRoutingId routingId of node to send
-     */
-    void sendBytes(byte[] bytes, long nodeRoutingId);
-
-    /**
      * Sends bytes to all connected nodes.
      *
      * @param bytes bytes to send

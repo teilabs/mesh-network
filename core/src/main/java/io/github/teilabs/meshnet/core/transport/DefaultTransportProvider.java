@@ -66,7 +66,7 @@ public class DefaultTransportProvider implements TransportProvider {
                 nodeRoutingId,
                 frameCodec.serialize(frame));
         byte[] bytes = transportMessageCodec.serialize(message);
-        transportProviderEvents.sendBytes(bytes, nodeRoutingId);
+        transportProviderEvents.sendBytesToEveryone(bytes);
     }
 
     @Override
@@ -179,12 +179,11 @@ public class DefaultTransportProvider implements TransportProvider {
         HandShakePayload handShakePayload = new HandShakePayload(keyPair.publicKey(),
                 cryptoProvider.sign(keyPair.publicKey(), keyPair.privateKey()));
         transportProviderEvents
-                .sendBytes(
+                .sendBytesToEveryone(
                         transportMessageCodec.serialize(
                                 new TransportMessage(TransportMessageConstants.VERSION, TransportMessage.TYPE_HANDSHAKE,
                                         keyPair.routingId(),
-                                        nodeRoutingId, handShakePayloadCodec.serialize(handShakePayload))),
-                        nodeRoutingId);
+                                        nodeRoutingId, handShakePayloadCodec.serialize(handShakePayload))));
     }
 
     private void addNode(long nodeRoutingId) {
