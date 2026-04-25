@@ -52,6 +52,11 @@ public class DefaultFrameRouter implements FrameRouter {
 
     @Override
     public void onFrameReceived(Frame frame, long prevNodeRoutingId) {
+        // Validate frame encrypted data size to match configured max size
+        if (frame.getEncryptedData().length > config.maxFrameEncryptedDataSize()) {
+            throw new IllegalArgumentException("Frame encrypted data size is too big");
+        }
+
         switch (frame.getType()) {
             case Frame.TYPE_DATA: {
                 // If we are final destination of this frame we should deliver it to the app
@@ -161,7 +166,7 @@ public class DefaultFrameRouter implements FrameRouter {
 
                     long tunnelId = Tunnel.generateTunnelId(srcRoutingId, dstRoutingId);
                     // If there is a tunnel it means, that this message is going back to tunnel
-                    // initiator and we should fill tunnel info with our second neighbour
+                    // initiator and we should fill tunnel info with our second neighbor
                     if (tunnelManager.containsTunnel(tunnelId, endpoint1AppId, endpoint2AppId)) {
                         // If frame direction is false, it means that this message isn't going back to
                         // tunnel initiator, so we should skip it to prevent cycle
@@ -175,7 +180,7 @@ public class DefaultFrameRouter implements FrameRouter {
                         Set<Pair<Short, Short>> appIds = tunnel.getAppIds();
                         appIds.add(new Pair<Short, Short>(endpoint1AppId, endpoint2AppId));
 
-                        // Create tunnel entity with filled nextRoutingId (our second neighbour)
+                        // Create tunnel entity with filled nextRoutingId (our second neighbor)
                         tunnelManager.addTunnel(new Tunnel(Math.min(srcRoutingId, dstRoutingId),
                                 Math.max(srcRoutingId, dstRoutingId),
                                 tunnel.getPrevRoutingId(), prevNodeRoutingId, appIds));
@@ -184,11 +189,11 @@ public class DefaultFrameRouter implements FrameRouter {
                     } else {
                         // If there isn't a tunnel it means, that this message is going through this
                         // node first time and we should store tunnel with prevNodeRoutingId as one of
-                        // neighbours
+                        // neighbors
                         Set<Pair<Short, Short>> appIds = Collections.synchronizedSet(new HashSet<Pair<Short, Short>>());
                         appIds.add(new Pair<Short, Short>(endpoint1AppId, endpoint2AppId));
 
-                        // Create tunnel entity with filled prevRoutingId (our first neighbour)
+                        // Create tunnel entity with filled prevRoutingId (our first neighbor)
                         tunnelManager.addTunnel(new Tunnel(Math.min(srcRoutingId, dstRoutingId),
                                 Math.max(srcRoutingId, dstRoutingId),
                                 prevNodeRoutingId, 0, appIds));
@@ -214,7 +219,7 @@ public class DefaultFrameRouter implements FrameRouter {
                     validateTunnelFrame(frame, tunnelId, prevNodeRoutingId);
 
                     // Determine which node should be next by excluding the previous node from our
-                    // tunnel neighbours and send frame to it
+                    // tunnel neighbors and send frame to it
                     long nextRoutingId = tunnel.getNextRoutingId() != prevNodeRoutingId ? tunnel.getNextRoutingId()
                             : tunnel.getPrevRoutingId();
                     transportProvider.sendFrame(frame, nextRoutingId);
@@ -291,7 +296,7 @@ public class DefaultFrameRouter implements FrameRouter {
                                     tunnel.getPrevRoutingId(), tunnel.getNextRoutingId(), appIds));
 
                     // Determine which node should be next by excluding the previous node from our
-                    // tunnel neighbours and send frame to it
+                    // tunnel neighbors and send frame to it
                     long nextRoutingId = tunnel.getNextRoutingId() != prevNodeRoutingId ? tunnel.getNextRoutingId()
                             : tunnel.getPrevRoutingId();
                     transportProvider.sendFrame(frame, nextRoutingId);
@@ -303,6 +308,11 @@ public class DefaultFrameRouter implements FrameRouter {
 
     @Override
     public void sendFrame(Frame frame) {
+        // Validate frame encrypted data size to match configured max size
+        if (frame.getEncryptedData().length > config.maxFrameEncryptedDataSize()) {
+            throw new IllegalArgumentException("Frame encrypted data size is too big");
+        }
+
         switch (frame.getType()) {
             case Frame.TYPE_DATA: {
                 // Checking that we aren't already distributing this frame
@@ -443,7 +453,7 @@ public class DefaultFrameRouter implements FrameRouter {
         Tunnel tunnel = tunnelManager.getTunnel(tunnelId);
 
         // If prevNodeRoutingId not equal to tunnel's next node routing id or prev
-        // routing id, then it's not our neighbour int the tunnel, so it hasn't got
+        // routing id, then it's not our neighbor int the tunnel, so it hasn't got
         // permission to send us the frame in this tunnel
         if (tunnel.getNextRoutingId() != prevNodeRoutingId && tunnel.getPrevRoutingId() != prevNodeRoutingId) {
             throw new IllegalArgumentException("Node " + prevNodeRoutingId + " is not part of tunnel " + tunnelId);

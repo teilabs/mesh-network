@@ -73,4 +73,9 @@ public interface Config {
      * @return configured path of folder where frames will be stored
      */
     String storedFramesFolderPath();
+
+    /**
+     * @return configured max size of frame's encrypted data in bytes
+     */
+    int maxFrameEncryptedDataSize();
 }
