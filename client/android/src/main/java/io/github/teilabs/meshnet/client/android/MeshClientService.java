@@ -46,6 +46,11 @@ public final class MeshClientService extends Service {
             public String storedFramesFolderPath() {
                 return "";
             }
+
+            @Override
+            public int maxFrameEncryptedDataSize() {
+                return 128 * 1024 * 1024;
+            }
         };
         clientEngine = new ClientEngine(getApplicationContext(), config);
     }

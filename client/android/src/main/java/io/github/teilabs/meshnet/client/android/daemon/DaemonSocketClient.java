@@ -5,7 +5,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
-import io.github.teilabs.meshnet.client.android.util.Logger;
+import io.github.teilabs.meshnet.client.android.util.AndroidLogger;
 
 public final class DaemonSocketClient {
     private static final String TAG = "DaemonSocketClient";
@@ -36,16 +36,21 @@ public final class DaemonSocketClient {
     }
 
     public void start() {
-        if (running)
+        if (running) {
+            AndroidLogger.d(TAG, "Start requested while client is already running");
             return;
+        }
         running = true;
+        AndroidLogger.i(TAG, "Starting daemon socket client");
 
         new Thread(() -> {
             while (running) {
                 try {
                     if (socket == null || socket.isClosed()) {
+                        AndroidLogger.i(TAG, "Connecting to daemon " + DAEMON_HOST + ":" + DAEMON_PORT);
                         socket = new Socket(DAEMON_HOST, DAEMON_PORT);
                         socket.setSoTimeout(SOCKET_TIMEOUT_MS);
+                        AndroidLogger.i(TAG, "Connected to daemon");
                     }
 
                     DataInputStream in = new DataInputStream(socket.getInputStream());
@@ -53,6 +58,7 @@ public final class DaemonSocketClient {
                     byte type = in.readByte();
                     byte[] payload = new byte[len - 1];
                     in.readFully(payload);
+                    AndroidLogger.d(TAG, "Received daemon message type " + type + " with " + payload.length + " bytes");
 
                     switch (type) {
                         case TYPE_INCOMING: {
@@ -60,26 +66,31 @@ public final class DaemonSocketClient {
                             break;
                         }
                         default: {
-                            Logger.e(TAG, "Unsupported message type.");
+                            AndroidLogger.e(TAG, "Unsupported message type.");
                             break;
                         }
                     }
 
                 } catch (IOException e) {
                     if (running) {
+                        AndroidLogger.w(TAG, "Daemon connection issue, retrying");
                         try {
                             Thread.sleep(1000);
                         } catch (InterruptedException ignored) {
+                            AndroidLogger.w(TAG, "Retry sleep interrupted");
                         }
                     }
                 }
             }
+            AndroidLogger.i(TAG, "Daemon socket reader stopped");
         }, "DaemonSocketClient-Read").start();
     }
 
     private void sendWithHeader(byte type, byte[] data) throws IOException {
-        if (data == null)
+        if (data == null) {
+            AndroidLogger.w(TAG, "Ignoring send request with null payload for type " + type);
             return;
+        }
         Socket s = socket;
         if (s != null && !s.isClosed()) {
             DataOutputStream out = new DataOutputStream(s.getOutputStream());
@@ -87,6 +98,9 @@ public final class DaemonSocketClient {
             out.write(type);
             out.write(data);
             out.flush();
+            AndroidLogger.d(TAG, "Sent daemon message type " + type + " with " + data.length + " bytes");
+        } else {
+            AndroidLogger.w(TAG, "Cannot send daemon message because socket is not connected");
         }
     }
 
@@ -95,6 +109,7 @@ public final class DaemonSocketClient {
     }
 
     public void startAdvertising(byte[] data, int intervalMs) throws IOException {
+        AndroidLogger.i(TAG, "Sending start advertising command with interval " + intervalMs + " ms");
         byte[] payload = new byte[4 + data.length];
         payload[0] = (byte) ((intervalMs >> 24) & 0xFF);
         payload[1] = (byte) ((intervalMs >> 16) & 0xFF);
@@ -105,15 +120,18 @@ public final class DaemonSocketClient {
     }
 
     public void stopAdvertising() throws IOException {
+        AndroidLogger.i(TAG, "Sending stop advertising command");
         sendWithHeader(TYPE_STOP_ADVERTISING, new byte[0]);
     }
 
     public void stop() {
         running = false;
+        AndroidLogger.i(TAG, "Stopping daemon socket client");
         try {
             if (socket != null)
                 socket.close();
         } catch (IOException e) {
+            AndroidLogger.e(TAG, "Failed to close daemon socket", e);
         }
     }
 }

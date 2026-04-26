@@ -2,10 +2,10 @@ package io.github.teilabs.meshnet.client.android.util;
 
 import android.util.Log;
 
-public final class Logger {
+public final class AndroidLogger {
     private static final String TAG_PREFIX = "MeshNet.";
 
-    private Logger() {
+    private AndroidLogger() {
     }
 
     public static void d(String tag, String message) {

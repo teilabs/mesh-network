@@ -32,15 +32,20 @@ import io.github.teilabs.meshnet.core.transport.advertising.AdvertisingPayloadCo
 import io.github.teilabs.meshnet.core.transport.advertising.BinaryAdvertisingPayloadCodec;
 import io.github.teilabs.meshnet.core.transport.handshake.BinaryHandShakePayloadCodec;
 import io.github.teilabs.meshnet.core.transport.handshake.HandShakePayloadCodec;
+import io.github.teilabs.meshnet.core.util.Logger;
 import java.io.IOException;
 
 /**
  * Main class that provides communication between the daemon and other classes.
  */
 public class MeshCore implements CoreInput {
+    private static final String TAG = "MeshCore";
+
     private final CoreEvents coreEvents;
 
     private final Config config;
+
+    private final Logger logger;
 
     private final FrameCodec frameCodec;
 
@@ -66,16 +71,17 @@ public class MeshCore implements CoreInput {
 
     private final FrameRouter frameRouter;
 
-    public MeshCore(CoreEvents coreEvents, Config config) {
+    public MeshCore(CoreEvents coreEvents, Config config, Logger logger) {
         this.coreEvents = coreEvents;
         this.config = config;
+        this.logger = logger;
 
         this.frameCodec = new BinaryFrameCodec();
         this.cryptoProvider = new BouncyCastleCryptoProvider();
         // Get key pair from storage if it exists or create and store it otherwise
         this.keyPair = (this.coreEvents.getKeyPair() != null) ? this.coreEvents.getKeyPair()
                 : this.coreEvents.saveKeyPair(this.cryptoProvider.generateKeyPair());
-        this.nodesManager = new HashSetNodesManager();
+        this.nodesManager = new HashSetNodesManager(this.logger);
         this.transportMessageCodec = new BinaryTransportMessageCodec();
         this.handShakePayloadCodec = new BinaryHandShakePayloadCodec();
         this.advertisingPayloadCodec = new BinaryAdvertisingPayloadCodec();
@@ -100,8 +106,7 @@ public class MeshCore implements CoreInput {
             public void deleteFile(String path) {
                 coreEvents.deleteFile(path);
             }
-
-        }, this.frameCodec, this.config);
+        }, this.frameCodec, this.config, this.logger);
         this.transportProvider = new DefaultTransportProvider(frameCodec, transportMessageCodec,
                 new TransportProviderEvents() {
                     @Override
@@ -124,13 +129,13 @@ public class MeshCore implements CoreInput {
                         coreEvents.stopAdvertising();
                     }
                 }, this.keyPair, this.handShakePayloadCodec, this.cryptoProvider, this.advertisingPayloadCodec,
-                this.nodesManager, this.frameBuffer, this.config);
+                this.nodesManager, this.frameBuffer, this.config, this.logger);
         this.tunnelManager = new HashMapTunnelManager(new TunnelManagerEvents() {
             @Override
             public boolean checkTunnelOpenAccess(Tunnel tunnel) {
                 return coreEvents.checkTunnelOpenAccess(tunnel);
             }
-        }, this.keyPair, this.config);
+        }, this.keyPair, this.config, this.logger);
         this.meshMessageCodec = new DefaultMeshMessageCodec(this.cryptoProvider, this.frameCodec, this.keyPair);
         this.frameRouter = new DefaultFrameRouter(this.keyPair, new FrameRouterEvents() {
             @Override
@@ -142,16 +147,20 @@ public class MeshCore implements CoreInput {
                 coreEvents.transferMessageToApp(message);
             }
         }, this.meshMessageCodec, this.frameBuffer, this.nodesManager, this.transportProvider, this.tunnelManager,
-                this.config);
+                this.config, this.logger);
+
+        logger.i(TAG, "Initialized with routingId: " + keyPair.routingId());
     }
 
     @Override
     public void onBytesReceived(byte[] bytes) {
+        logger.d(TAG, "Received " + bytes.length + " bytes");
         transportProvider.onBytesReceived(bytes);
     }
 
     @Override
     public void onAppSendMessage(MeshOutgoingMessage message) {
+        logger.d(TAG, "Send message " + message.getType() + " from app " + message.getSrcAppId());
         Frame frame = meshMessageCodec.generateOutgoingFrame(message);
         frameRouter.sendFrame(frame);
     }

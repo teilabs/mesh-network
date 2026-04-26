@@ -5,7 +5,7 @@ import android.content.SharedPreferences;
 import androidx.security.crypto.EncryptedSharedPreferences;
 import androidx.security.crypto.MasterKey;
 
-import io.github.teilabs.meshnet.client.android.util.Logger;
+import io.github.teilabs.meshnet.client.android.util.AndroidLogger;
 import io.github.teilabs.meshnet.core.crypto.Ed25519KeyPair;
 
 public final class AndroidKeyStorage {
@@ -30,8 +30,9 @@ public final class AndroidKeyStorage {
                     masterKey,
                     EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
                     EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM);
+            AndroidLogger.i(TAG, "Encrypted key storage initialized");
         } catch (Exception e) {
-            Logger.e(TAG, "Failed to initialize EncryptedSharedPreferences", e);
+            AndroidLogger.e(TAG, "Failed to initialize EncryptedSharedPreferences", e);
             throw new RuntimeException(e);
         }
     }
@@ -40,12 +41,14 @@ public final class AndroidKeyStorage {
         String publicBase64 = prefs.getString(KEY_PUBLIC, null);
         String privateBase64 = prefs.getString(KEY_PRIVATE, null);
         if (publicBase64 == null || privateBase64 == null) {
+            AndroidLogger.d(TAG, "No stored key pair found");
             return null;
         }
         try {
+            AndroidLogger.d(TAG, "Stored key pair found, decoding");
             return Ed25519KeyPair.fromBase64(publicBase64, privateBase64);
         } catch (Exception e) {
-            Logger.e(TAG, "Failed to decode key pair", e);
+            AndroidLogger.e(TAG, "Failed to decode key pair", e);
             return null;
         }
     }
@@ -58,16 +61,19 @@ public final class AndroidKeyStorage {
                 .putString(KEY_PUBLIC, Ed25519KeyPair.toBase64Public(keyPair))
                 .putString(KEY_PRIVATE, Ed25519KeyPair.toBase64Private(keyPair))
                 .apply();
+        AndroidLogger.i(TAG, "Key pair saved");
         return keyPair;
     }
 
     public void deleteKeyPair() {
         prefs.edit().remove(KEY_PRIVATE).apply();
-        Logger.i(TAG, "Key pair deleted");
+        AndroidLogger.i(TAG, "Key pair deleted");
     }
 
     public boolean hasKeyPair() {
         String privB64 = prefs.getString(KEY_PRIVATE, null);
-        return privB64 != null && !privB64.isEmpty();
+        boolean hasKeyPair = privB64 != null && !privB64.isEmpty();
+        AndroidLogger.d(TAG, hasKeyPair ? "Key pair exists in storage" : "Key pair does not exist in storage");
+        return hasKeyPair;
     }
 }

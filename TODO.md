@@ -3,5 +3,3 @@
 ## Create types for exceptions
 
 ## Write javadoc for client/android
-
-## Add logging for core and client/android

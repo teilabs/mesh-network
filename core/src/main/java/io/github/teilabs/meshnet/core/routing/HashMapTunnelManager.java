@@ -2,6 +2,7 @@ package io.github.teilabs.meshnet.core.routing;
 
 import io.github.teilabs.meshnet.core.config.Config;
 import io.github.teilabs.meshnet.core.crypto.Ed25519KeyPair;
+import io.github.teilabs.meshnet.core.util.Logger;
 import io.github.teilabs.meshnet.core.util.Pair;
 import java.util.Collections;
 import java.util.Map;
@@ -13,25 +14,32 @@ import java.util.concurrent.ConcurrentHashMap;
  * tunnels}.
  */
 public class HashMapTunnelManager implements TunnelManager {
+    private static final String TAG = "HashMapTunnelManager";
+
     private final TunnelManagerEvents tunnelManagerEvents;
 
     private final Ed25519KeyPair keyPair;
 
     private final Config config;
 
+    private final Logger logger;
+
     private final Map<Long, Tunnel> tunnels = new ConcurrentHashMap<Long, Tunnel>();
 
     private final Map<Long, Tunnel> pendingTunnels = new ConcurrentHashMap<Long, Tunnel>();
 
-    public HashMapTunnelManager(TunnelManagerEvents tunnelManagerEvents, Ed25519KeyPair keyPair, Config config) {
+    public HashMapTunnelManager(TunnelManagerEvents tunnelManagerEvents, Ed25519KeyPair keyPair, Config config,
+            Logger logger) {
         this.tunnelManagerEvents = tunnelManagerEvents;
         this.keyPair = keyPair;
         this.config = config;
+        this.logger = logger;
     }
 
     @Override
     public Tunnel getTunnel(long tunnelId) throws IllegalArgumentException {
         if (!tunnels.containsKey(tunnelId)) {
+            logger.w(TAG, "Tunnel not found: " + tunnelId);
             throw new IllegalArgumentException("Tunnel not found");
         }
         return tunnels.get(tunnelId);
@@ -39,8 +47,10 @@ public class HashMapTunnelManager implements TunnelManager {
 
     @Override
     public void addTunnel(Tunnel tunnel) throws RuntimeException {
+        long tunnelId = Tunnel.generateTunnelId(tunnel.getEndpoint1RoutingId(), tunnel.getEndpoint2RoutingId());
         // Check if tunnel count isn't exceeded
         if (tunnels.size() + pendingTunnels.size() >= config.maxTunnelsCount()) {
+            logger.e(TAG, "Max tunnels count reached while adding tunnel " + tunnelId);
             throw new RuntimeException("Max tunnels count reached");
         }
 
@@ -49,11 +59,12 @@ public class HashMapTunnelManager implements TunnelManager {
         if ((tunnel.getEndpoint2RoutingId() == keyPair.routingId()
                 || tunnel.getEndpoint1RoutingId() == keyPair.routingId())
                 && !tunnelManagerEvents.checkTunnelOpenAccess(tunnel)) {
+            logger.w(TAG, "Tunnel open access denied for tunnel " + tunnelId);
             throw new RuntimeException("Tunnel open access denied");
         }
 
         tunnels.computeIfPresent(
-                Tunnel.generateTunnelId(tunnel.getEndpoint1RoutingId(), tunnel.getEndpoint2RoutingId()),
+                tunnelId,
                 (k, v) -> {
                     // If tunnel with this tunnelId already exists, we should add all new app pairs
                     // to it and rewrite it in storage
@@ -62,14 +73,15 @@ public class HashMapTunnelManager implements TunnelManager {
                     return new Tunnel(v.getEndpoint1RoutingId(), v.getEndpoint2RoutingId(), v.getPrevRoutingId(),
                             v.getNextRoutingId(), appIds);
                 });
-        tunnels.putIfAbsent(Tunnel.generateTunnelId(tunnel.getEndpoint1RoutingId(), tunnel.getEndpoint2RoutingId()),
-                tunnel);
+        tunnels.putIfAbsent(tunnelId, tunnel);
+        logger.i(TAG, "Tunnel added or updated: " + tunnelId);
     }
 
     @Override
     public void removeTunnel(Tunnel tunnel) {
+        long tunnelId = Tunnel.generateTunnelId(tunnel.getEndpoint1RoutingId(), tunnel.getEndpoint2RoutingId());
         tunnels.computeIfPresent(
-                Tunnel.generateTunnelId(tunnel.getEndpoint1RoutingId(), tunnel.getEndpoint2RoutingId()),
+                tunnelId,
                 (k, v) -> {
                     // Remove from tunnel all app pairs that we want to delete
                     Set<Pair<Short, Short>> appIds = Collections.synchronizedSet(v.getAppIds());
@@ -83,7 +95,7 @@ public class HashMapTunnelManager implements TunnelManager {
                     return new Tunnel(v.getEndpoint1RoutingId(), v.getEndpoint2RoutingId(), v.getPrevRoutingId(),
                             v.getNextRoutingId(), appIds);
                 });
-
+        logger.i(TAG, "Tunnel removed or updated: " + tunnelId);
     }
 
     @Override
@@ -97,6 +109,7 @@ public class HashMapTunnelManager implements TunnelManager {
     @Override
     public Tunnel getPendingTunnel(long tunnelId) throws IllegalArgumentException {
         if (!pendingTunnels.containsKey(tunnelId)) {
+            logger.w(TAG, "Pending tunnel not found: " + tunnelId);
             throw new IllegalArgumentException("Tunnel not found");
         }
         return pendingTunnels.get(tunnelId);
@@ -104,13 +117,15 @@ public class HashMapTunnelManager implements TunnelManager {
 
     @Override
     public void addPendingTunnel(Tunnel tunnel) {
+        long tunnelId = Tunnel.generateTunnelId(tunnel.getEndpoint1RoutingId(), tunnel.getEndpoint2RoutingId());
         // Check if tunnel count isn't exceeded
         if (tunnels.size() + pendingTunnels.size() >= config.maxTunnelsCount()) {
+            logger.e(TAG, "Max tunnels count reached while adding pending tunnel " + tunnelId);
             throw new RuntimeException("Max tunnels count reached");
         }
 
         pendingTunnels.computeIfPresent(
-                Tunnel.generateTunnelId(tunnel.getEndpoint1RoutingId(), tunnel.getEndpoint2RoutingId()),
+                tunnelId,
                 (k, v) -> {
                     // If tunnel with this tunnelId already exists, we should add all new app pairs
                     // to it and rewrite it in storage
@@ -119,15 +134,15 @@ public class HashMapTunnelManager implements TunnelManager {
                     return new Tunnel(v.getEndpoint1RoutingId(), v.getEndpoint2RoutingId(), v.getPrevRoutingId(),
                             v.getNextRoutingId(), appIds);
                 });
-        pendingTunnels.putIfAbsent(
-                Tunnel.generateTunnelId(tunnel.getEndpoint1RoutingId(), tunnel.getEndpoint2RoutingId()),
-                tunnel);
+        pendingTunnels.putIfAbsent(tunnelId, tunnel);
+        logger.i(TAG, "Pending tunnel added or updated: " + tunnelId);
     }
 
     @Override
     public void removePendingTunnel(Tunnel tunnel) {
+        long tunnelId = Tunnel.generateTunnelId(tunnel.getEndpoint1RoutingId(), tunnel.getEndpoint2RoutingId());
         pendingTunnels.computeIfPresent(
-                Tunnel.generateTunnelId(tunnel.getEndpoint1RoutingId(), tunnel.getEndpoint2RoutingId()),
+                tunnelId,
                 (k, v) -> {
                     // Remove from tunnel all app pairs that we want to delete
                     Set<Pair<Short, Short>> appIds = Collections.synchronizedSet(v.getAppIds());
@@ -141,6 +156,7 @@ public class HashMapTunnelManager implements TunnelManager {
                     return new Tunnel(v.getEndpoint1RoutingId(), v.getEndpoint2RoutingId(), v.getPrevRoutingId(),
                             v.getNextRoutingId(), appIds);
                 });
+        logger.i(TAG, "Pending tunnel removed or updated: " + tunnelId);
     }
 
     @Override
