@@ -2,9 +2,11 @@ package io.github.teilabs.meshnet.core.transport;
 
 import java.nio.ByteBuffer;
 
+import io.github.teilabs.meshnet.core.exception.MeshProtocolException;
+
 public class BinaryTransportMessageCodec implements TransportMessageCodec {
     @Override
-    public byte[] serialize(TransportMessage message) {
+    public byte[] serialize(TransportMessage message) throws MeshProtocolException {
         // serializing transport message according to version
         switch (message.getVersion()) {
             case 1: {
@@ -21,12 +23,12 @@ public class BinaryTransportMessageCodec implements TransportMessageCodec {
                 return buffer.array();
             }
             default:
-                throw new IllegalArgumentException("Unsupported transport message version.");
+                throw new MeshProtocolException("Unsupported transport message version.");
         }
     }
 
     @Override
-    public TransportMessage parse(byte[] bytes) {
+    public TransportMessage parse(byte[] bytes) throws MeshProtocolException {
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
 
         byte version = buffer.get();
@@ -46,7 +48,7 @@ public class BinaryTransportMessageCodec implements TransportMessageCodec {
                         payload);
             }
             default:
-                throw new IllegalArgumentException("Unsupported transport message version.");
+                throw new MeshProtocolException("Unsupported transport message version.");
         }
     }
 

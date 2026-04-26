@@ -11,6 +11,7 @@ import io.github.teilabs.meshnet.core.config.Config;
 import io.github.teilabs.meshnet.core.crypto.BouncyCastleCryptoProvider;
 import io.github.teilabs.meshnet.core.crypto.CryptoProvider;
 import io.github.teilabs.meshnet.core.crypto.Ed25519KeyPair;
+import io.github.teilabs.meshnet.core.exception.MeshStorageException;
 import io.github.teilabs.meshnet.core.frame.BinaryFrameCodec;
 import io.github.teilabs.meshnet.core.frame.Frame;
 import io.github.teilabs.meshnet.core.frame.FrameCodec;
@@ -33,7 +34,6 @@ import io.github.teilabs.meshnet.core.transport.advertising.BinaryAdvertisingPay
 import io.github.teilabs.meshnet.core.transport.handshake.BinaryHandShakePayloadCodec;
 import io.github.teilabs.meshnet.core.transport.handshake.HandShakePayloadCodec;
 import io.github.teilabs.meshnet.core.util.Logger;
-import java.io.IOException;
 
 /**
  * Main class that provides communication between the daemon and other classes.
@@ -88,12 +88,12 @@ public class MeshCore implements CoreInput {
         this.frameBuffer = new PersistentFrameBuffer(new FrameBufferEvents() {
 
             @Override
-            public void writeFile(String path, byte[] data) {
+            public void writeFile(String path, byte[] data) throws MeshStorageException {
                 coreEvents.writeFile(path, data);
             }
 
             @Override
-            public byte[] readFile(String path) throws IOException {
+            public byte[] readFile(String path) throws MeshStorageException {
                 return coreEvents.readFile(path);
             }
 

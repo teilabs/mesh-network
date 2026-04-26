@@ -2,6 +2,7 @@ package io.github.teilabs.meshnet.core.api;
 
 import io.github.teilabs.meshnet.core.crypto.CryptoProvider;
 import io.github.teilabs.meshnet.core.crypto.Ed25519KeyPair;
+import io.github.teilabs.meshnet.core.exception.MeshSecurityException;
 import io.github.teilabs.meshnet.core.frame.Frame;
 import io.github.teilabs.meshnet.core.frame.FrameCodec;
 import io.github.teilabs.meshnet.core.frame.FrameConstants;
@@ -23,11 +24,11 @@ public final class DefaultMeshMessageCodec implements MeshMessageCodec {
     }
 
     @Override
-    public MeshIncomingMessage parseIncomingFrame(Frame frame) {
+    public MeshIncomingMessage parseIncomingFrame(Frame frame) throws MeshSecurityException {
         // Validate frame signature to prove author
         if (!cryptoProvider.verify(frameCodec.serializeHeader(frame), frame.getSignature(),
                 frame.getSrcPubKey())) {
-            throw new IllegalArgumentException("Invalid signature. Author prove failed");
+            throw new MeshSecurityException("Invalid signature. Author prove failed");
         }
         byte[] decryptedData = cryptoProvider.decrypt(keyPair.privateKey(), frame.getNonce(),
                 frameCodec.serializeHeader(frame), frame.getEncryptedData());

@@ -1,5 +1,8 @@
 package io.github.teilabs.meshnet.core.routing;
 
+import io.github.teilabs.meshnet.core.exception.MeshRoutingException;
+import io.github.teilabs.meshnet.core.exception.MeshSecurityException;
+
 /**
  * Interface for storing {@link Tunnel tunnels} and managing them.
  */
@@ -9,18 +12,19 @@ public interface TunnelManager {
      * 
      * @param tunnelId id of a tunnel
      * @return tunnel with this id
-     * @throws IllegalArgumentException if no tunnel with this id
+     * @throws MeshRoutingException if no tunnel with this id
      */
-    Tunnel getTunnel(long tunnelId) throws IllegalArgumentException;
+    Tunnel getTunnel(long tunnelId) throws MeshRoutingException;
 
     /**
      * Adds tunnel. If tunnel with same id already exists, appIds from new tunnel
      * will be added to existing tunnel.
      * 
      * @param tunnel tunnel to add
-     * @throws RuntimeException if tunnel can't be opened
+     * @throws MeshRoutingException  if tunnel count is exceeded
+     * @throws MeshSecurityException if tunnel open access is denied
      */
-    void addTunnel(Tunnel tunnel) throws RuntimeException;
+    void addTunnel(Tunnel tunnel) throws MeshRoutingException, MeshSecurityException;
 
     /**
      * Removes tunnel. AppIds from given tunnel will be removed from existed tunnel
@@ -47,18 +51,18 @@ public interface TunnelManager {
      * 
      * @param tunnelId id of a tunnel
      * @return pending tunnel with this id
-     * @throws IllegalArgumentException if no tunnel with this id
+     * @throws MeshRoutingException if no tunnel with this id
      */
-    Tunnel getPendingTunnel(long tunnelId) throws IllegalArgumentException;
+    Tunnel getPendingTunnel(long tunnelId) throws MeshRoutingException;
 
     /**
      * Adds pending tunnel. If tunnel with same id already exists, appIds from new
      * tunnel will be added to existing tunnel.
      * 
      * @param tunnel pending tunnel to add
-     * @throws RuntimeException if tunnel can't be opened
+     * @throws MeshRoutingException if tunnel count is exceeded
      */
-    void addPendingTunnel(Tunnel tunnel);
+    void addPendingTunnel(Tunnel tunnel) throws MeshRoutingException;
 
     /**
      * Removes pending tunnel. AppIds from given tunnel will be removed from existed

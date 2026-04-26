@@ -1,10 +1,10 @@
 package io.github.teilabs.meshnet.core.buffer;
 
 import io.github.teilabs.meshnet.core.config.Config;
+import io.github.teilabs.meshnet.core.exception.MeshStorageException;
 import io.github.teilabs.meshnet.core.frame.Frame;
 import io.github.teilabs.meshnet.core.frame.FrameCodec;
 import io.github.teilabs.meshnet.core.util.Logger;
-import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -42,7 +42,7 @@ public class PersistentFrameBuffer implements FrameBuffer {
                 byte[] bytes = this.frameBufferEvents.readFile(this.config.storedFramesFolderPath() + files[i]);
                 Frame parsedFrame = this.frameCodec.parse(bytes);
                 frames.add(parsedFrame);
-            } catch (IOException e) {
+            } catch (MeshStorageException e) {
                 logger.e(TAG, "Failed to load frame from file: " + files[i], e);
             }
         }
@@ -53,7 +53,7 @@ public class PersistentFrameBuffer implements FrameBuffer {
         // Checks if frame is already exists to prevent collisions
         if (containsFrame(frame)) {
             logger.w(TAG, "Frame already stored: " + frame.hashCode());
-            throw new IllegalArgumentException("Frame already stored");
+            throw new MeshStorageException("Frame already stored");
         }
 
         // Removes oldest stored frame until count of frames is less than MAX_FRAMES

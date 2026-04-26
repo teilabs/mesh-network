@@ -1,6 +1,8 @@
 package io.github.teilabs.meshnet.core.transport;
 
 import io.github.teilabs.meshnet.core.config.Config;
+import io.github.teilabs.meshnet.core.exception.MeshProtocolException;
+import io.github.teilabs.meshnet.core.exception.MeshSecurityException;
 import io.github.teilabs.meshnet.core.frame.Frame;
 import java.util.concurrent.CompletableFuture;
 
@@ -50,6 +52,8 @@ public interface TransportProvider {
      * Processes received bytes.
      * 
      * @param bytes received bytes
+     * @throws MeshProtocolException if message parsing fails.
+     * @throws MeshSecurityException if signature verification fails.
      */
-    void onBytesReceived(byte[] bytes);
+    void onBytesReceived(byte[] bytes) throws MeshProtocolException, MeshSecurityException;
 }

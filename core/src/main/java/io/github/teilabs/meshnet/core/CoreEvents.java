@@ -1,9 +1,8 @@
 package io.github.teilabs.meshnet.core;
 
-import java.io.IOException;
-
 import io.github.teilabs.meshnet.core.api.MeshIncomingMessage;
 import io.github.teilabs.meshnet.core.crypto.Ed25519KeyPair;
+import io.github.teilabs.meshnet.core.exception.MeshStorageException;
 import io.github.teilabs.meshnet.core.routing.Tunnel;
 
 /**
@@ -59,16 +58,18 @@ public interface CoreEvents {
      * 
      * @param path The path to the file.
      * @param data The data to write.
+     * @throws MeshStorageException if the file writing failed.
      */
-    void writeFile(String path, byte[] data);
+    void writeFile(String path, byte[] data) throws MeshStorageException;
 
     /**
      * Reads a file from the file system.
      * 
      * @param path The path to the file.
      * @return The data read from the file.
+     * @throws MeshStorageException if the file reading failed.
      */
-    byte[] readFile(String path) throws IOException;
+    byte[] readFile(String path) throws MeshStorageException;
 
     /**
      * Lists the files in a folder.

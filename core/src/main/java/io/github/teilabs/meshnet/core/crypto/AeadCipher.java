@@ -4,6 +4,8 @@ import org.bouncycastle.crypto.modes.ChaCha20Poly1305;
 import org.bouncycastle.crypto.params.AEADParameters;
 import org.bouncycastle.crypto.params.KeyParameter;
 
+import io.github.teilabs.meshnet.core.exception.MeshSecurityException;
+
 /**
  * Class for encrypting and decrypting bytes with ChaCha20-Poly1305.
  */
@@ -19,8 +21,9 @@ public final class AeadCipher {
      * @param aad       additional authenticated data
      * @param plainData plain bytes to encrypt
      * @return encrypted bytes
+     * @throws MeshSecurityException if encryption fails.
      */
-    public static byte[] encrypt(byte[] key, byte[] nonce, byte[] aad, byte[] plainData) {
+    public static byte[] encrypt(byte[] key, byte[] nonce, byte[] aad, byte[] plainData) throws MeshSecurityException {
         try {
             ChaCha20Poly1305 cipher = new ChaCha20Poly1305();
             cipher.init(true, new AEADParameters(new KeyParameter(key), 128, nonce, aad));
@@ -30,7 +33,7 @@ public final class AeadCipher {
             len += cipher.doFinal(out, len);
             return java.util.Arrays.copyOf(out, len);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new MeshSecurityException("Encryption failed", e);
         }
     }
 
@@ -42,8 +45,9 @@ public final class AeadCipher {
      * @param aad        additional authenticated data
      * @param cipherData encrypted bytes
      * @return decrypted bytes
+     * @throws MeshSecurityException if decryption fails.
      */
-    public static byte[] decrypt(byte[] key, byte[] nonce, byte[] aad, byte[] cipherData) {
+    public static byte[] decrypt(byte[] key, byte[] nonce, byte[] aad, byte[] cipherData) throws MeshSecurityException {
         try {
             ChaCha20Poly1305 cipher = new ChaCha20Poly1305();
             cipher.init(false, new AEADParameters(new KeyParameter(key), 128, nonce, aad));
@@ -53,7 +57,7 @@ public final class AeadCipher {
             len += cipher.doFinal(out, len);
             return java.util.Arrays.copyOf(out, len);
         } catch (Exception e) {
-            throw new RuntimeException(e);
+            throw new MeshSecurityException("Decryption failed", e);
         }
     }
 }

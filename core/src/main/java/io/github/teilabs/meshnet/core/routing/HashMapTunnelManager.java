@@ -2,6 +2,8 @@ package io.github.teilabs.meshnet.core.routing;
 
 import io.github.teilabs.meshnet.core.config.Config;
 import io.github.teilabs.meshnet.core.crypto.Ed25519KeyPair;
+import io.github.teilabs.meshnet.core.exception.MeshRoutingException;
+import io.github.teilabs.meshnet.core.exception.MeshSecurityException;
 import io.github.teilabs.meshnet.core.util.Logger;
 import io.github.teilabs.meshnet.core.util.Pair;
 import java.util.Collections;
@@ -37,21 +39,21 @@ public class HashMapTunnelManager implements TunnelManager {
     }
 
     @Override
-    public Tunnel getTunnel(long tunnelId) throws IllegalArgumentException {
+    public Tunnel getTunnel(long tunnelId) throws MeshRoutingException {
         if (!tunnels.containsKey(tunnelId)) {
             logger.w(TAG, "Tunnel not found: " + tunnelId);
-            throw new IllegalArgumentException("Tunnel not found");
+            throw new MeshRoutingException("Tunnel not found");
         }
         return tunnels.get(tunnelId);
     }
 
     @Override
-    public void addTunnel(Tunnel tunnel) throws RuntimeException {
+    public void addTunnel(Tunnel tunnel) throws MeshRoutingException, MeshSecurityException {
         long tunnelId = Tunnel.generateTunnelId(tunnel.getEndpoint1RoutingId(), tunnel.getEndpoint2RoutingId());
         // Check if tunnel count isn't exceeded
         if (tunnels.size() + pendingTunnels.size() >= config.maxTunnelsCount()) {
             logger.e(TAG, "Max tunnels count reached while adding tunnel " + tunnelId);
-            throw new RuntimeException("Max tunnels count reached");
+            throw new MeshRoutingException("Max tunnels count reached");
         }
 
         // If current node is one of tunnel endpoints, we must request permission to
@@ -60,7 +62,7 @@ public class HashMapTunnelManager implements TunnelManager {
                 || tunnel.getEndpoint1RoutingId() == keyPair.routingId())
                 && !tunnelManagerEvents.checkTunnelOpenAccess(tunnel)) {
             logger.w(TAG, "Tunnel open access denied for tunnel " + tunnelId);
-            throw new RuntimeException("Tunnel open access denied");
+            throw new MeshSecurityException("Tunnel open access denied");
         }
 
         tunnels.computeIfPresent(
@@ -107,21 +109,21 @@ public class HashMapTunnelManager implements TunnelManager {
     }
 
     @Override
-    public Tunnel getPendingTunnel(long tunnelId) throws IllegalArgumentException {
+    public Tunnel getPendingTunnel(long tunnelId) throws MeshRoutingException {
         if (!pendingTunnels.containsKey(tunnelId)) {
             logger.w(TAG, "Pending tunnel not found: " + tunnelId);
-            throw new IllegalArgumentException("Tunnel not found");
+            throw new MeshRoutingException("Tunnel not found");
         }
         return pendingTunnels.get(tunnelId);
     }
 
     @Override
-    public void addPendingTunnel(Tunnel tunnel) {
+    public void addPendingTunnel(Tunnel tunnel) throws MeshRoutingException {
         long tunnelId = Tunnel.generateTunnelId(tunnel.getEndpoint1RoutingId(), tunnel.getEndpoint2RoutingId());
         // Check if tunnel count isn't exceeded
         if (tunnels.size() + pendingTunnels.size() >= config.maxTunnelsCount()) {
             logger.e(TAG, "Max tunnels count reached while adding pending tunnel " + tunnelId);
-            throw new RuntimeException("Max tunnels count reached");
+            throw new MeshRoutingException("Max tunnels count reached");
         }
 
         pendingTunnels.computeIfPresent(

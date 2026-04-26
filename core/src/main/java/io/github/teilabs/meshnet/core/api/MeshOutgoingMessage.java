@@ -1,6 +1,7 @@
 package io.github.teilabs.meshnet.core.api;
 
 import io.github.teilabs.meshnet.core.MeshCore;
+import io.github.teilabs.meshnet.core.exception.MeshValidationException;
 import io.github.teilabs.meshnet.core.frame.Frame;
 import io.github.teilabs.meshnet.core.frame.FrameConstants;
 import java.util.Arrays;
@@ -54,7 +55,7 @@ public final class MeshOutgoingMessage {
     private final boolean direction;
 
     public MeshOutgoingMessage(byte type, short srcAppId, short dstAppId, byte[] dstPubKey,
-            byte[] data, boolean direction) {
+            byte[] data, boolean direction) throws MeshValidationException {
         this.type = type;
         this.srcAppId = srcAppId;
         this.dstAppId = dstAppId;
@@ -66,36 +67,45 @@ public final class MeshOutgoingMessage {
         validateByType();
     }
 
-    /** Validates non type related fields. */
-    private void validateFields() {
+    /**
+     * Validates non type related fields.
+     * 
+     * @throws MeshValidationException if type or key length is invalid.
+     */
+    private void validateFields() throws MeshValidationException {
         if (type < 0 || type > 3) {
-            throw new IllegalArgumentException("Type must be in range from 0 to 3");
+            throw new MeshValidationException("Type must be in range from 0 to 3");
         }
         if (dstPubKey.length != FrameConstants.PUBLIC_KEY_SIZE_v1) {
-            throw new IllegalArgumentException(
+            throw new MeshValidationException(
                     "Dst public key must have length of " + FrameConstants.PUBLIC_KEY_SIZE_v1 + " bytes");
         }
     }
 
-    /** Validates type related fields. */
-    private void validateByType() {
+    /**
+     * Validates type related fields.
+     * 
+     * @throws MeshValidationException if data is missing or present when it
+     *                                 shouldn't be.
+     */
+    private void validateByType() throws MeshValidationException {
         if (type == TYPE_DATA) {
             if (data.length == 0) {
-                throw new IllegalArgumentException(
+                throw new MeshValidationException(
                         "Data frame must have data.");
             }
         } else if (type == TYPE_OPEN_TUNNEL) {
             if (data.length != 0) {
-                throw new IllegalArgumentException(
+                throw new MeshValidationException(
                         "Open tunnel frame mustn't have data.");
             }
         } else if (type == TYPE_DATA_TUNNEL) {
             if (data.length == 0) {
-                throw new IllegalArgumentException("Data tunnel frame must have data");
+                throw new MeshValidationException("Data tunnel frame must have data");
             }
         } else if (type == TYPE_CLOSE_TUNNEL) {
             if (data.length != 0) {
-                throw new IllegalArgumentException(
+                throw new MeshValidationException(
                         "Close tunnel frame mustn't have data.");
             }
         }

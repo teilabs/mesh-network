@@ -1,6 +1,8 @@
 package io.github.teilabs.meshnet.core.routing;
 
 import io.github.teilabs.meshnet.core.crypto.Ed25519KeyPair;
+import io.github.teilabs.meshnet.core.exception.MeshRoutingException;
+import io.github.teilabs.meshnet.core.exception.MeshValidationException;
 import io.github.teilabs.meshnet.core.util.Pair;
 import java.nio.ByteBuffer;
 import java.security.MessageDigest;
@@ -52,7 +54,7 @@ public final class Tunnel {
     private final Set<Pair<Short, Short>> appIds;
 
     public Tunnel(long endpoint1RoutingId, long endpoint2RoutingId, long prevRoutingId, long nextRoutingId,
-            Set<Pair<Short, Short>> appIds) {
+            Set<Pair<Short, Short>> appIds) throws MeshValidationException {
         this.endpoint1RoutingId = endpoint1RoutingId;
         this.endpoint2RoutingId = endpoint2RoutingId;
         this.prevRoutingId = prevRoutingId;
@@ -62,10 +64,14 @@ public final class Tunnel {
         validateFields();
     }
 
-    /** Validates fields values. */
-    void validateFields() {
+    /**
+     * Validates fields values.
+     * 
+     * @throws MeshValidationException if endpoint1RoutingId >= endpoint2RoutingId.
+     */
+    void validateFields() throws MeshValidationException {
         if (endpoint1RoutingId >= endpoint2RoutingId) {
-            throw new IllegalArgumentException(
+            throw new MeshValidationException(
                     "The source routing ID must be strictly less than the destination routing ID");
         }
     }
@@ -90,7 +96,15 @@ public final class Tunnel {
         return new HashSet<Pair<Short, Short>>(appIds);
     }
 
-    public static long generateTunnelId(long endpoint1RoutingId, long endpoint2RoutingId) {
+    /**
+     * Generates tunnel id from endpoint routing ids.
+     * 
+     * @param endpoint1RoutingId routing id of one of tunnel endpoints
+     * @param endpoint2RoutingId routing id of another tunnel endpoint
+     * @return generated tunnel id
+     * @throws MeshRoutingException if SHA-256 algorithm not found
+     */
+    public static long generateTunnelId(long endpoint1RoutingId, long endpoint2RoutingId) throws MeshRoutingException {
         ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES * 2);
         buffer.putLong(Math.min(endpoint1RoutingId, endpoint2RoutingId));
         buffer.putLong(Math.max(endpoint1RoutingId, endpoint2RoutingId));
@@ -99,7 +113,7 @@ public final class Tunnel {
             byte[] hash = digest.digest(buffer.array());
             return ByteBuffer.wrap(hash, 0, 8).getLong();
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
+            throw new MeshRoutingException("SHA-256 algorithm not found", e);
         }
     }
 

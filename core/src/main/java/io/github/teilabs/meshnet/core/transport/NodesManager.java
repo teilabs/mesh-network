@@ -1,5 +1,7 @@
 package io.github.teilabs.meshnet.core.transport;
 
+import io.github.teilabs.meshnet.core.exception.MeshValidationException;
+
 /**
  * Interface for storing connected nodes.
  */
@@ -8,9 +10,9 @@ public interface NodesManager {
      * Adds a node to the list of connected nodes.
      * 
      * @param nodeRoutingId The routing ID of the node to add.
-     * @throws IllegalArgumentException If the node is already stored.
+     * @throws MeshValidationException If the node is already stored.
      */
-    void addNode(long nodeRoutingId) throws IllegalArgumentException;
+    void addNode(long nodeRoutingId) throws MeshValidationException;
 
     /**
      * Removes a node from the list of connected nodes.

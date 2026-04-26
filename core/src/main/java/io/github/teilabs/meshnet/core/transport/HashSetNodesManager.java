@@ -1,5 +1,6 @@
 package io.github.teilabs.meshnet.core.transport;
 
+import io.github.teilabs.meshnet.core.exception.MeshValidationException;
 import io.github.teilabs.meshnet.core.util.Logger;
 import java.util.Collections;
 import java.util.HashSet;
@@ -21,11 +22,11 @@ public class HashSetNodesManager implements NodesManager {
     }
 
     @Override
-    public void addNode(long nodeRoutingId) {
+    public void addNode(long nodeRoutingId) throws MeshValidationException {
         // Checks if node is already exists to prevent collisions
         if (nodes.contains(nodeRoutingId)) {
             logger.w(TAG, "Node already stored: " + nodeRoutingId);
-            throw new IllegalArgumentException("Node already stored");
+            throw new MeshValidationException("Node already stored");
         }
 
         nodes.add(nodeRoutingId);

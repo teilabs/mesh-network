@@ -1,5 +1,6 @@
 package io.github.teilabs.meshnet.core.crypto;
 
+import io.github.teilabs.meshnet.core.exception.MeshValidationException;
 import java.nio.ByteBuffer;
 import java.security.SecureRandom;
 import java.util.Base64;
@@ -15,11 +16,12 @@ import org.bouncycastle.crypto.params.Ed25519PublicKeyParameters;
  * @param privateKey Ed25519 private key
  * @param publicKey  Ed25519 public key
  * @param routingId  routing id generated from public key
+ * @throws MeshValidationException if keys are not 32 bytes.
  */
 public record Ed25519KeyPair(byte[] privateKey, byte[] publicKey, long routingId) {
     public Ed25519KeyPair {
         if (privateKey.length != 32 || publicKey.length != 32)
-            throw new IllegalArgumentException("Keys must be 32 bytes");
+            throw new MeshValidationException("Keys must be 32 bytes");
     }
 
     /**
@@ -74,8 +76,9 @@ public record Ed25519KeyPair(byte[] privateKey, byte[] publicKey, long routingId
      * @param publicBase64  base64 encoded public key
      * @param privateBase64 base64 encoded private key
      * @return generated key pair
+     * @throws MeshValidationException if keys are not 32 bytes after decoding.
      */
-    public static Ed25519KeyPair fromBase64(String publicBase64, String privateBase64) {
+    public static Ed25519KeyPair fromBase64(String publicBase64, String privateBase64) throws MeshValidationException {
         byte[] publicKey = Base64.getDecoder().decode(publicBase64);
         byte[] privateKey = Base64.getDecoder().decode(privateBase64);
         long routingId = generateRoutingId(publicKey);

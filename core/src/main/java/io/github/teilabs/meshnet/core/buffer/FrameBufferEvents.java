@@ -1,6 +1,6 @@
 package io.github.teilabs.meshnet.core.buffer;
 
-import java.io.IOException;
+import io.github.teilabs.meshnet.core.exception.MeshStorageException;
 
 /**
  * Functions that {@link FrameBuffer} can call.
@@ -11,17 +11,18 @@ public interface FrameBufferEvents {
      * 
      * @param path The path to the file.
      * @param data The data to write.
+     * @throws MeshStorageException if the file writing failed.
      */
-    void writeFile(String path, byte[] data);
+    void writeFile(String path, byte[] data) throws MeshStorageException;
 
     /**
      * Reads a file from the file system.
      * 
      * @param path The path to the file.
      * @return The data read from the file.
-     * @throws IOException if the file reading failed.
+     * @throws MeshStorageException if the file reading failed.
      */
-    byte[] readFile(String path) throws IOException;
+    byte[] readFile(String path) throws MeshStorageException;
 
     /**
      * Lists the files in a folder.

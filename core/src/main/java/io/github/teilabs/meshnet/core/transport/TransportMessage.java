@@ -1,6 +1,8 @@
 package io.github.teilabs.meshnet.core.transport;
 
 import io.github.teilabs.meshnet.core.crypto.Ed25519KeyPair;
+import io.github.teilabs.meshnet.core.exception.MeshProtocolException;
+import io.github.teilabs.meshnet.core.exception.MeshValidationException;
 import java.util.Arrays;
 
 public final class TransportMessage {
@@ -44,7 +46,8 @@ public final class TransportMessage {
      */
     private final byte[] payload;
 
-    public TransportMessage(byte version, byte type, long senderRoutingId, long targetRoutingId, byte[] payload) {
+    public TransportMessage(byte version, byte type, long senderRoutingId, long targetRoutingId, byte[] payload)
+            throws MeshProtocolException, MeshValidationException {
         this.version = version;
         this.type = type;
         this.senderRoutingId = senderRoutingId;
@@ -55,21 +58,31 @@ public final class TransportMessage {
         validateByType();
     }
 
-    /** Validates non type related fields. */
-    private void validateFields() {
+    /**
+     * Validates non type related fields.
+     * 
+     * @throws MeshProtocolException   if version is invalid.
+     * @throws MeshValidationException if type is invalid.
+     */
+    private void validateFields() throws MeshProtocolException, MeshValidationException {
         if (version < 1) {
-            throw new IllegalArgumentException("Version must be higher that 0");
+            throw new MeshProtocolException("Version must be higher that 0");
         }
         if (type < 0 || type > 2) {
-            throw new IllegalArgumentException("Type must be in range from 0 to 2");
+            throw new MeshValidationException("Type must be in range from 0 to 2");
         }
     }
 
-    /** Validates type related fields. */
-    private void validateByType() {
+    /**
+     * Validates type related fields.
+     * 
+     * @throws MeshValidationException if targetRoutingId is not 0 for advertising
+     *                                 messages.
+     */
+    private void validateByType() throws MeshValidationException {
         if (type == TYPE_ADVERTISING) {
             if (targetRoutingId != 0) {
-                throw new IllegalArgumentException(
+                throw new MeshValidationException(
                         "Advertising message must target routing id equaled 0.");
             }
         }

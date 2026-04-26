@@ -1,6 +1,8 @@
 package io.github.teilabs.meshnet.core.frame;
 
 import io.github.teilabs.meshnet.core.crypto.Ed25519KeyPair;
+import io.github.teilabs.meshnet.core.exception.MeshProtocolException;
+import io.github.teilabs.meshnet.core.exception.MeshValidationException;
 import java.util.Arrays;
 
 /**
@@ -76,7 +78,7 @@ public final class Frame {
             byte[] nonce,
             boolean direction,
             byte[] signature,
-            byte[] encryptedData) {
+            byte[] encryptedData) throws MeshProtocolException, MeshValidationException {
         this.version = version;
         this.type = type;
         this.timestamp = timestamp;
@@ -93,47 +95,58 @@ public final class Frame {
         validateByType();
     }
 
-    /** Validates non type related fields. */
-    private void validateFields() {
+    /**
+     * Validates non type related fields.
+     * 
+     * @throws MeshProtocolException   if version is invalid.
+     * @throws MeshValidationException if type or key/nonce/signature lengths are
+     *                                 invalid.
+     */
+    private void validateFields() throws MeshProtocolException, MeshValidationException {
         if (version < 1) {
-            throw new IllegalArgumentException("Version must be higher that 0");
+            throw new MeshProtocolException("Version must be higher that 0");
         }
         if (type < 0 || type > 3) {
-            throw new IllegalArgumentException("Type must be in range from 0 to 3");
+            throw new MeshValidationException("Type must be in range from 0 to 3");
         }
         if (srcPubKey.length != FrameConstants.PUBLIC_KEY_SIZE_v1) {
-            throw new IllegalArgumentException(
+            throw new MeshValidationException(
                     "Src public key must have length of " + FrameConstants.PUBLIC_KEY_SIZE_v1 + " bytes");
         }
         if (nonce.length != FrameConstants.NONCE_SIZE_v1) {
-            throw new IllegalArgumentException(
+            throw new MeshValidationException(
                     "Nonce must have length of " + FrameConstants.NONCE_SIZE_v1 + " bytes");
         }
         if (signature.length != FrameConstants.SIGNATURE_SIZE_v1) {
-            throw new IllegalArgumentException(
+            throw new MeshValidationException(
                     "Signature must have length of " + FrameConstants.SIGNATURE_SIZE_v1 + " bytes");
         }
     }
 
-    /** Validates type related fields. */
-    private void validateByType() {
+    /**
+     * Validates type related fields.
+     * 
+     * @throws MeshValidationException if encrypted data is missing or present when
+     *                                 it shouldn't be.
+     */
+    private void validateByType() throws MeshValidationException {
         if (type == TYPE_DATA) {
             if (encryptedData.length == 0) {
-                throw new IllegalArgumentException(
+                throw new MeshValidationException(
                         "Data frame must have encrypted data.");
             }
         } else if (type == TYPE_OPEN_TUNNEL) {
             if (encryptedData.length != 0) {
-                throw new IllegalArgumentException(
+                throw new MeshValidationException(
                         "Open tunnel frame mustn't have encrypted data.");
             }
         } else if (type == TYPE_DATA_TUNNEL) {
             if (encryptedData.length == 0) {
-                throw new IllegalArgumentException("Data tunnel frame must have encrypted data");
+                throw new MeshValidationException("Data tunnel frame must have encrypted data");
             }
         } else if (type == TYPE_CLOSE_TUNNEL) {
             if (encryptedData.length != 0) {
-                throw new IllegalArgumentException(
+                throw new MeshValidationException(
                         "Close tunnel frame mustn't have encrypted data.");
             }
         }

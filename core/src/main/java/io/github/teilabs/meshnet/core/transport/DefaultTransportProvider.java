@@ -4,6 +4,9 @@ import io.github.teilabs.meshnet.core.buffer.FrameBuffer;
 import io.github.teilabs.meshnet.core.config.Config;
 import io.github.teilabs.meshnet.core.crypto.CryptoProvider;
 import io.github.teilabs.meshnet.core.crypto.Ed25519KeyPair;
+import io.github.teilabs.meshnet.core.exception.MeshProtocolException;
+import io.github.teilabs.meshnet.core.exception.MeshSecurityException;
+import io.github.teilabs.meshnet.core.exception.MeshValidationException;
 import io.github.teilabs.meshnet.core.frame.Frame;
 import io.github.teilabs.meshnet.core.frame.FrameCodec;
 import io.github.teilabs.meshnet.core.transport.advertising.AdvertisingPayload;
@@ -137,7 +140,7 @@ public class DefaultTransportProvider implements TransportProvider {
     }
 
     @Override
-    public void onBytesReceived(byte[] bytes) {
+    public void onBytesReceived(byte[] bytes) throws MeshProtocolException, MeshSecurityException {
         logger.d(TAG, "Received transport bytes: " + bytes.length);
         // Parse transport message from bytes to use structured data
         TransportMessage message = transportMessageCodec.parse(bytes);
@@ -158,7 +161,7 @@ public class DefaultTransportProvider implements TransportProvider {
                 if (!cryptoProvider.verify(handShakePayload.getSrcPubKey(), handShakePayload.getSignature(),
                         handShakePayload.getSrcPubKey())) {
                     logger.e(TAG, "Handshake signature verification failed for node " + message.getSenderRoutingId());
-                    throw new IllegalArgumentException("Invalid signature. Author prove failed");
+                    throw new MeshSecurityException("Invalid signature. Author prove failed");
                 }
 
                 // Check if this is response to our handshake or request for a new handshake
@@ -192,7 +195,7 @@ public class DefaultTransportProvider implements TransportProvider {
                         advertisingPayload.getSrcPubKey())) {
                     logger.e(TAG, "Advertising signature verification failed for node "
                             + message.getSenderRoutingId());
-                    throw new IllegalArgumentException("Invalid signature. Author prove failed");
+                    throw new MeshSecurityException("Invalid signature. Author prove failed");
                 }
                 // If verification passed, add node to nodes manager
                 addNode(message.getSenderRoutingId());
@@ -233,7 +236,7 @@ public class DefaultTransportProvider implements TransportProvider {
             for (Frame frame : frames) {
                 sendFrame(frame, nodeRoutingId);
             }
-        } catch (IllegalArgumentException e) {
+        } catch (MeshValidationException e) {
             logger.d(TAG, "Node already connected: " + nodeRoutingId);
         }
     }

@@ -12,6 +12,8 @@ import io.github.teilabs.meshnet.core.MeshCore;
 import io.github.teilabs.meshnet.core.api.MeshIncomingMessage;
 import io.github.teilabs.meshnet.core.config.Config;
 import io.github.teilabs.meshnet.core.crypto.Ed25519KeyPair;
+import io.github.teilabs.meshnet.core.exception.MeshStorageException;
+import io.github.teilabs.meshnet.core.exception.MeshValidationException;
 import io.github.teilabs.meshnet.core.routing.Tunnel;
 import io.github.teilabs.meshnet.core.util.Logger;
 
@@ -32,9 +34,9 @@ public final class CoreBridge implements CoreEvents, Logger {
 
     public CoreBridge(Context context, Config config) {
         if (context == null)
-            throw new IllegalArgumentException("Context cannot be null");
+            throw new MeshValidationException("Context cannot be null");
         if (config == null)
-            throw new IllegalArgumentException("Config cannot be null");
+            throw new MeshValidationException("Config cannot be null");
 
         this.context = context.getApplicationContext();
         this.config = config;
@@ -107,23 +109,24 @@ public final class CoreBridge implements CoreEvents, Logger {
     }
 
     @Override
-    public void writeFile(String path, byte[] data) {
+    public void writeFile(String path, byte[] data) throws MeshStorageException {
         AndroidLogger.d(TAG, "Writing file: " + path);
         try {
             FileUtils.write(context, path, data);
-        } catch (IOException e) {
+        } catch (MeshStorageException e) {
             AndroidLogger.e(TAG, "Failed to write file", e);
+            throw e;
         }
     }
 
     @Override
-    public byte[] readFile(String path) throws IOException {
+    public byte[] readFile(String path) throws MeshStorageException {
         AndroidLogger.d(TAG, "Reading file: " + path);
         try {
             return FileUtils.read(context, path);
-        } catch (IOException e) {
+        } catch (MeshStorageException e) {
             AndroidLogger.e(TAG, "Failed to read file", e);
-            throw new IOException("Failed to read file");
+            throw e;
         }
     }
 

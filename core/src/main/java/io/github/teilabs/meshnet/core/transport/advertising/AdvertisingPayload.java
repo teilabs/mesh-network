@@ -1,5 +1,6 @@
 package io.github.teilabs.meshnet.core.transport.advertising;
 
+import io.github.teilabs.meshnet.core.exception.MeshValidationException;
 import io.github.teilabs.meshnet.core.frame.FrameConstants;
 import java.util.Arrays;
 
@@ -15,21 +16,25 @@ public final class AdvertisingPayload {
      */
     private final byte[] signature;
 
-    public AdvertisingPayload(byte[] srcPubKey, byte[] signature) {
+    public AdvertisingPayload(byte[] srcPubKey, byte[] signature) throws MeshValidationException {
         this.srcPubKey = srcPubKey.clone();
         this.signature = signature.clone();
 
         validateFields();
     }
 
-    /** Validates fields values. */
-    private void validateFields() {
+    /**
+     * Validates fields values.
+     * 
+     * @throws MeshValidationException if key or signature length is invalid.
+     */
+    private void validateFields() throws MeshValidationException {
         if (srcPubKey.length != FrameConstants.PUBLIC_KEY_SIZE_v1) {
-            throw new IllegalArgumentException(
+            throw new MeshValidationException(
                     "Src public key must have length of " + FrameConstants.PUBLIC_KEY_SIZE_v1 + " bytes");
         }
         if (signature.length != FrameConstants.SIGNATURE_SIZE_v1) {
-            throw new IllegalArgumentException(
+            throw new MeshValidationException(
                     "Signature must have length of " + FrameConstants.SIGNATURE_SIZE_v1 + " bytes");
         }
     }

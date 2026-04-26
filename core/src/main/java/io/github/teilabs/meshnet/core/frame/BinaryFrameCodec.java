@@ -2,9 +2,11 @@ package io.github.teilabs.meshnet.core.frame;
 
 import java.nio.ByteBuffer;
 
+import io.github.teilabs.meshnet.core.exception.MeshProtocolException;
+
 public class BinaryFrameCodec implements FrameCodec {
     @Override
-    public Frame parse(byte[] rawFrame) {
+    public Frame parse(byte[] rawFrame) throws MeshProtocolException {
         ByteBuffer buffer = ByteBuffer.wrap(rawFrame);
 
         byte version = buffer.get();
@@ -39,12 +41,12 @@ public class BinaryFrameCodec implements FrameCodec {
                         encryptedData);
             }
             default:
-                throw new IllegalArgumentException("Unsupported frame version.");
+                throw new MeshProtocolException("Unsupported frame version.");
         }
     }
 
     @Override
-    public byte[] serialize(Frame frame) {
+    public byte[] serialize(Frame frame) throws MeshProtocolException {
         // serializing frame according to version
         switch (frame.getVersion()) {
             case 1: {
@@ -68,12 +70,12 @@ public class BinaryFrameCodec implements FrameCodec {
                 return buffer.array();
             }
             default:
-                throw new IllegalArgumentException("Unsupported frame version.");
+                throw new MeshProtocolException("Unsupported frame version.");
         }
     }
 
     @Override
-    public byte[] serializeHeader(Frame frame) {
+    public byte[] serializeHeader(Frame frame) throws MeshProtocolException {
         // serializing frame header according to version
         switch (frame.getVersion()) {
             case 1: {
@@ -94,7 +96,7 @@ public class BinaryFrameCodec implements FrameCodec {
                 return buffer.array();
             }
             default:
-                throw new IllegalArgumentException("Unsupported frame version.");
+                throw new MeshProtocolException("Unsupported frame version.");
         }
     }
 }

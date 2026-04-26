@@ -8,6 +8,9 @@ import io.github.teilabs.meshnet.core.config.Config;
 import io.github.teilabs.meshnet.core.config.Config.TransitMode;
 import io.github.teilabs.meshnet.core.config.Config.TunnelMode;
 import io.github.teilabs.meshnet.core.crypto.Ed25519KeyPair;
+import io.github.teilabs.meshnet.core.exception.MeshRoutingException;
+import io.github.teilabs.meshnet.core.exception.MeshSecurityException;
+import io.github.teilabs.meshnet.core.exception.MeshValidationException;
 import io.github.teilabs.meshnet.core.frame.Frame;
 import io.github.teilabs.meshnet.core.transport.NodesManager;
 import io.github.teilabs.meshnet.core.transport.TransportProvider;
@@ -57,12 +60,12 @@ public class DefaultFrameRouter implements FrameRouter {
     }
 
     @Override
-    public void onFrameReceived(Frame frame, long prevNodeRoutingId) {
+    public void onFrameReceived(Frame frame, long prevNodeRoutingId) throws MeshValidationException, MeshRoutingException {
         logger.d(TAG, "Received frame type " + frame.getType() + " from node " + prevNodeRoutingId);
         // Validate frame encrypted data size to match configured max size
         if (frame.getEncryptedData().length > config.maxFrameEncryptedDataSize()) {
             logger.e(TAG, "Frame encrypted data too large: " + frame.getEncryptedData().length);
-            throw new IllegalArgumentException("Frame encrypted data size is too big");
+            throw new MeshValidationException("Frame encrypted data size is too big");
         }
 
         switch (frame.getType()) {
@@ -146,7 +149,7 @@ public class DefaultFrameRouter implements FrameRouter {
                             transportProvider.sendFrame(meshMessageCodec.generateOutgoingFrame(message),
                                     prevNodeRoutingId);
                         }
-                    } catch (RuntimeException e) {
+                    } catch (MeshRoutingException | MeshSecurityException e) {
                         logger.w(TAG, "Open tunnel failed for local node: " + e.getMessage());
                         // If there is a pending tunnel, it means that we are initiator of the tunnel
                         // and we should clean up pending tunnels list
@@ -334,12 +337,12 @@ public class DefaultFrameRouter implements FrameRouter {
     }
 
     @Override
-    public void sendFrame(Frame frame) {
+    public void sendFrame(Frame frame) throws MeshValidationException, MeshRoutingException {
         logger.d(TAG, "Sending frame type " + frame.getType() + " from local node");
         // Validate frame encrypted data size to match configured max size
         if (frame.getEncryptedData().length > config.maxFrameEncryptedDataSize()) {
             logger.e(TAG, "Frame encrypted data too large: " + frame.getEncryptedData().length);
-            throw new IllegalArgumentException("Frame encrypted data size is too big");
+            throw new MeshValidationException("Frame encrypted data size is too big");
         }
 
         switch (frame.getType()) {
@@ -446,8 +449,10 @@ public class DefaultFrameRouter implements FrameRouter {
      * @param frame             frame from the tunnel
      * @param prevNodeRoutingId routing id of the node from which we received the
      *                          frame
+     * @throws MeshValidationException if the frame is invalid.
+     * @throws MeshRoutingException if there's a routing error.
      */
-    private void validateTunnelFrame(Frame frame, long prevNodeRoutingId) {
+    private void validateTunnelFrame(Frame frame, long prevNodeRoutingId) throws MeshValidationException, MeshRoutingException {
         // Generate tunnelId and call validateTunnelFrame function with all arguments
         long tunnelId = Tunnel.generateTunnelId(Ed25519KeyPair.generateRoutingId(frame.getSrcPubKey()),
                 frame.getDstRoutingId());
@@ -461,8 +466,10 @@ public class DefaultFrameRouter implements FrameRouter {
      * @param tunnelId          id of the tunnel
      * @param prevNodeRoutingId routing id of the node from which we received the
      *                          frame
+     * @throws MeshValidationException if the frame is invalid.
+     * @throws MeshRoutingException if there's a routing error.
      */
-    private void validateTunnelFrame(Frame frame, long tunnelId, long prevNodeRoutingId) {
+    private void validateTunnelFrame(Frame frame, long tunnelId, long prevNodeRoutingId) throws MeshValidationException, MeshRoutingException {
         logger.d(TAG, "Validating tunnel frame for tunnel " + tunnelId + " from node " + prevNodeRoutingId);
         // Get src and dst routing ids from frame
         long srcRoutingId = Ed25519KeyPair.generateRoutingId(frame.getSrcPubKey());
@@ -482,7 +489,7 @@ public class DefaultFrameRouter implements FrameRouter {
         if (!tunnelManager.containsTunnel(tunnelId, endpoint1AppId, endpoint2AppId)) {
             logger.e(TAG, "Tunnel validation failed: missing tunnel " + tunnelId + " for app pair "
                     + endpoint1AppId + ":" + endpoint2AppId);
-            throw new IllegalArgumentException("Tunnel does not exist. Or appIds list does not contain pair "
+            throw new MeshValidationException("Tunnel does not exist. Or appIds list does not contain pair "
                     + endpoint1AppId + ":" + endpoint2AppId);
         }
 
@@ -495,7 +502,7 @@ public class DefaultFrameRouter implements FrameRouter {
         if (tunnel.getNextRoutingId() != prevNodeRoutingId && tunnel.getPrevRoutingId() != prevNodeRoutingId) {
             logger.e(TAG, "Tunnel validation failed: node " + prevNodeRoutingId + " is not part of tunnel "
                     + tunnelId);
-            throw new IllegalArgumentException("Node " + prevNodeRoutingId + " is not part of tunnel " + tunnelId);
+            throw new MeshRoutingException("Node " + prevNodeRoutingId + " is not part of tunnel " + tunnelId);
         }
 
         // TODO: verify signature

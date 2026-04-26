@@ -1,5 +1,6 @@
 package io.github.teilabs.meshnet.core.api;
 
+import io.github.teilabs.meshnet.core.exception.MeshValidationException;
 import io.github.teilabs.meshnet.core.frame.Frame;
 import io.github.teilabs.meshnet.core.frame.FrameConstants;
 import java.util.Arrays;
@@ -25,7 +26,7 @@ public final class MeshIncomingMessage {
     private final byte[] data;
 
     public MeshIncomingMessage(int timestamp, short srcAppId, short dstAppId, byte[] srcPubKey,
-            byte[] data) {
+            byte[] data) throws MeshValidationException {
 
         this.timestamp = timestamp;
         this.srcAppId = srcAppId;
@@ -36,10 +37,14 @@ public final class MeshIncomingMessage {
         validateFields();
     }
 
-    /** Validates non type related fields. */
-    private void validateFields() {
+    /**
+     * Validates non type related fields.
+     * 
+     * @throws MeshValidationException if public key length is invalid.
+     */
+    private void validateFields() throws MeshValidationException {
         if (srcPubKey.length != FrameConstants.PUBLIC_KEY_SIZE_v1) {
-            throw new IllegalArgumentException(
+            throw new MeshValidationException(
                     "Src public key must have length of " + FrameConstants.PUBLIC_KEY_SIZE_v1 + " bytes");
         }
     }

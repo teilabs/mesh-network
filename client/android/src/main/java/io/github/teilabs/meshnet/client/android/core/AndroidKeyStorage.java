@@ -7,6 +7,8 @@ import androidx.security.crypto.MasterKey;
 
 import io.github.teilabs.meshnet.client.android.util.AndroidLogger;
 import io.github.teilabs.meshnet.core.crypto.Ed25519KeyPair;
+import io.github.teilabs.meshnet.core.exception.MeshStorageException;
+import io.github.teilabs.meshnet.core.exception.MeshValidationException;
 
 public final class AndroidKeyStorage {
     private static final String TAG = "AndroidKeyStorage";
@@ -16,9 +18,17 @@ public final class AndroidKeyStorage {
 
     private final SharedPreferences prefs;
 
-    public AndroidKeyStorage(Context context) {
+    /**
+     * Initializes encrypted storage for keys.
+     * 
+     * @param context Android context
+     * @throws MeshValidationException if context is null.
+     * @throws MeshStorageException    if EncryptedSharedPreferences initialization
+     *                                 fails.
+     */
+    public AndroidKeyStorage(Context context) throws MeshValidationException, MeshStorageException {
         if (context == null) {
-            throw new IllegalArgumentException("Context cannot be null");
+            throw new MeshValidationException("Context cannot be null");
         }
         try {
             MasterKey masterKey = new MasterKey.Builder(context)
@@ -33,7 +43,7 @@ public final class AndroidKeyStorage {
             AndroidLogger.i(TAG, "Encrypted key storage initialized");
         } catch (Exception e) {
             AndroidLogger.e(TAG, "Failed to initialize EncryptedSharedPreferences", e);
-            throw new RuntimeException(e);
+            throw new MeshStorageException("Failed to initialize encrypted storage", e);
         }
     }
 
@@ -53,9 +63,16 @@ public final class AndroidKeyStorage {
         }
     }
 
-    public Ed25519KeyPair saveKeyPair(Ed25519KeyPair keyPair) {
+    /**
+     * Saves key pair to encrypted storage.
+     * 
+     * @param keyPair key pair to save
+     * @return saved key pair
+     * @throws MeshValidationException if keyPair is null.
+     */
+    public Ed25519KeyPair saveKeyPair(Ed25519KeyPair keyPair) throws MeshValidationException {
         if (keyPair == null) {
-            throw new IllegalArgumentException("KeyPair cannot be null");
+            throw new MeshValidationException("KeyPair cannot be null");
         }
         prefs.edit()
                 .putString(KEY_PUBLIC, Ed25519KeyPair.toBase64Public(keyPair))

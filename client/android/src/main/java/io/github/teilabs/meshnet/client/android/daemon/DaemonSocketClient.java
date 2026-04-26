@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.net.Socket;
 
 import io.github.teilabs.meshnet.client.android.util.AndroidLogger;
+import io.github.teilabs.meshnet.core.exception.MeshValidationException;
 
 public final class DaemonSocketClient {
     private static final String TAG = "DaemonSocketClient";
@@ -31,7 +32,7 @@ public final class DaemonSocketClient {
 
     public DaemonSocketClient(MessageHandler onMessage) {
         if (onMessage == null)
-            throw new IllegalArgumentException("MessageHandler cannot be null");
+            throw new MeshValidationException("MessageHandler cannot be null");
         this.onMessage = onMessage;
     }
 
