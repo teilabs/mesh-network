@@ -1,6 +1,7 @@
 package io.github.teilabs.meshnet.core.transport;
 
 import io.github.teilabs.meshnet.core.exception.MeshValidationException;
+import java.util.Set;
 
 /**
  * Interface for storing connected nodes.
@@ -29,4 +30,11 @@ public interface NodesManager {
      *         false - otherwise.
      */
     boolean checkConnectionToNode(long nodeRoutingId);
+
+    /**
+     * Returns all known nodes with direct connection to this node.
+     * 
+     * @return Set containing those nodes.
+     */
+    Set<Long> getNodes();
 }

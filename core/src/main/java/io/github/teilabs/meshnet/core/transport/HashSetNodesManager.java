@@ -12,7 +12,6 @@ import java.util.Set;
 public class HashSetNodesManager implements NodesManager {
     private static final String TAG = "HashSetNodesManager";
 
-    // TODO: send handshakes to all nodes with some interval
     private final Set<Long> nodes = Collections.synchronizedSet(new HashSet<Long>());
 
     private final Logger logger;
@@ -49,8 +48,12 @@ public class HashSetNodesManager implements NodesManager {
             logger.d(TAG, "No direct connection to node: " + nodeRoutingId);
             return false;
         }
-        // TODO: maybe send handshake
         logger.d(TAG, "Direct connection confirmed for node: " + nodeRoutingId);
         return true;
+    }
+
+    @Override
+    public Set<Long> getNodes() {
+        return new HashSet<>(nodes);
     }
 }

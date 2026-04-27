@@ -51,6 +51,11 @@ public final class MeshClientService extends Service {
             public int maxFrameEncryptedDataSize() {
                 return 128 * 1024 * 1024;
             }
+
+            @Override
+            public long handshakeIntervalMs() {
+                return 10000;
+            }
         };
         clientEngine = new ClientEngine(getApplicationContext(), config);
     }

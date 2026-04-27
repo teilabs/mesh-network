@@ -22,6 +22,8 @@ import io.github.teilabs.meshnet.core.routing.HashMapTunnelManager;
 import io.github.teilabs.meshnet.core.routing.Tunnel;
 import io.github.teilabs.meshnet.core.routing.TunnelManager;
 import io.github.teilabs.meshnet.core.routing.TunnelManagerEvents;
+import io.github.teilabs.meshnet.core.scheduler.HandshakeScheduler;
+import io.github.teilabs.meshnet.core.scheduler.HandshakeSchedulerEvents;
 import io.github.teilabs.meshnet.core.transport.BinaryTransportMessageCodec;
 import io.github.teilabs.meshnet.core.transport.DefaultTransportProvider;
 import io.github.teilabs.meshnet.core.transport.HashSetNodesManager;
@@ -31,8 +33,8 @@ import io.github.teilabs.meshnet.core.transport.TransportProvider;
 import io.github.teilabs.meshnet.core.transport.TransportProviderEvents;
 import io.github.teilabs.meshnet.core.transport.advertising.AdvertisingPayloadCodec;
 import io.github.teilabs.meshnet.core.transport.advertising.BinaryAdvertisingPayloadCodec;
-import io.github.teilabs.meshnet.core.transport.handshake.BinaryHandShakePayloadCodec;
-import io.github.teilabs.meshnet.core.transport.handshake.HandShakePayloadCodec;
+import io.github.teilabs.meshnet.core.transport.handshake.BinaryHandshakePayloadCodec;
+import io.github.teilabs.meshnet.core.transport.handshake.HandshakePayloadCodec;
 import io.github.teilabs.meshnet.core.util.Logger;
 
 /**
@@ -57,7 +59,7 @@ public class MeshCore implements CoreInput {
 
     private final TransportMessageCodec transportMessageCodec;
 
-    private final HandShakePayloadCodec handShakePayloadCodec;
+    private final HandshakePayloadCodec handshakePayloadCodec;
 
     private final AdvertisingPayloadCodec advertisingPayloadCodec;
 
@@ -71,6 +73,8 @@ public class MeshCore implements CoreInput {
 
     private final FrameRouter frameRouter;
 
+    private final HandshakeScheduler handshakeScheduler;
+
     public MeshCore(CoreEvents coreEvents, Config config, Logger logger) {
         this.coreEvents = coreEvents;
         this.config = config;
@@ -83,7 +87,7 @@ public class MeshCore implements CoreInput {
                 : this.coreEvents.saveKeyPair(this.cryptoProvider.generateKeyPair());
         this.nodesManager = new HashSetNodesManager(this.logger);
         this.transportMessageCodec = new BinaryTransportMessageCodec();
-        this.handShakePayloadCodec = new BinaryHandShakePayloadCodec();
+        this.handshakePayloadCodec = new BinaryHandshakePayloadCodec();
         this.advertisingPayloadCodec = new BinaryAdvertisingPayloadCodec();
         this.frameBuffer = new PersistentFrameBuffer(new FrameBufferEvents() {
 
@@ -128,7 +132,7 @@ public class MeshCore implements CoreInput {
                     public void stopAdvertising() {
                         coreEvents.stopAdvertising();
                     }
-                }, this.keyPair, this.handShakePayloadCodec, this.cryptoProvider, this.advertisingPayloadCodec,
+                }, this.keyPair, this.handshakePayloadCodec, this.cryptoProvider, this.advertisingPayloadCodec,
                 this.nodesManager, this.frameBuffer, this.config, this.logger);
         this.tunnelManager = new HashMapTunnelManager(new TunnelManagerEvents() {
             @Override
@@ -148,6 +152,15 @@ public class MeshCore implements CoreInput {
             }
         }, this.meshMessageCodec, this.frameBuffer, this.nodesManager, this.transportProvider, this.tunnelManager,
                 this.config, this.logger);
+        this.handshakeScheduler = new HandshakeScheduler(this.config, this.logger, this.nodesManager,
+                new HandshakeSchedulerEvents() {
+                    @Override
+                    public void sendHandshake(long nodeRoutingId) {
+                        transportProvider.sendHandshake(nodeRoutingId);
+                    }
+                });
+
+        this.handshakeScheduler.start();
 
         logger.i(TAG, "Initialized with routingId: " + keyPair.routingId());
     }

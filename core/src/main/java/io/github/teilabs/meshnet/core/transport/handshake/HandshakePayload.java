@@ -7,7 +7,7 @@ import java.util.Arrays;
 /**
  * Class for all messages that are used for handshakes.
  */
-public final class HandShakePayload {
+public final class HandshakePayload {
     /** Ed25519 public key of source device. */
     private final byte[] srcPubKey;
 
@@ -16,7 +16,7 @@ public final class HandShakePayload {
      */
     private final byte[] signature;
 
-    public HandShakePayload(byte[] srcPubKey, byte[] signature) throws MeshValidationException {
+    public HandshakePayload(byte[] srcPubKey, byte[] signature) throws MeshValidationException {
         this.srcPubKey = srcPubKey.clone();
         this.signature = signature.clone();
 
@@ -64,7 +64,7 @@ public final class HandShakePayload {
             return false;
         if (getClass() != obj.getClass())
             return false;
-        HandShakePayload other = (HandShakePayload) obj;
+        HandshakePayload other = (HandshakePayload) obj;
         if (!Arrays.equals(srcPubKey, other.srcPubKey))
             return false;
         if (!Arrays.equals(signature, other.signature))

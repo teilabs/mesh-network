@@ -78,4 +78,9 @@ public interface Config {
      * @return configured max size of frame's encrypted data in bytes
      */
     int maxFrameEncryptedDataSize();
+
+    /**
+     * @return configured interval between handshakes in milliseconds
+     */
+    long handshakeIntervalMs();
 }

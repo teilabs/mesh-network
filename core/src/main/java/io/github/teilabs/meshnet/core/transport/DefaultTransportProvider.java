@@ -11,8 +11,8 @@ import io.github.teilabs.meshnet.core.frame.Frame;
 import io.github.teilabs.meshnet.core.frame.FrameCodec;
 import io.github.teilabs.meshnet.core.transport.advertising.AdvertisingPayload;
 import io.github.teilabs.meshnet.core.transport.advertising.AdvertisingPayloadCodec;
-import io.github.teilabs.meshnet.core.transport.handshake.HandShakePayload;
-import io.github.teilabs.meshnet.core.transport.handshake.HandShakePayloadCodec;
+import io.github.teilabs.meshnet.core.transport.handshake.HandshakePayload;
+import io.github.teilabs.meshnet.core.transport.handshake.HandshakePayloadCodec;
 import io.github.teilabs.meshnet.core.util.Logger;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -35,7 +35,7 @@ public class DefaultTransportProvider implements TransportProvider {
 
     private final Ed25519KeyPair keyPair;
 
-    private final HandShakePayloadCodec handShakePayloadCodec;
+    private final HandshakePayloadCodec handshakePayloadCodec;
 
     private final CryptoProvider cryptoProvider;
 
@@ -51,14 +51,14 @@ public class DefaultTransportProvider implements TransportProvider {
 
     public DefaultTransportProvider(FrameCodec frameCodec, TransportMessageCodec transportMessageCodec,
             TransportProviderEvents transportProviderEvents, Ed25519KeyPair keyPair,
-            HandShakePayloadCodec handShakePayloadCodec, CryptoProvider cryptoProvider,
+            HandshakePayloadCodec handshakePayloadCodec, CryptoProvider cryptoProvider,
             AdvertisingPayloadCodec advertisingPayloadCodec, NodesManager nodesManager, FrameBuffer frameBuffer,
             Config config, Logger logger) {
         this.frameCodec = frameCodec;
         this.transportMessageCodec = transportMessageCodec;
         this.transportProviderEvents = transportProviderEvents;
         this.keyPair = keyPair;
-        this.handShakePayloadCodec = handShakePayloadCodec;
+        this.handshakePayloadCodec = handshakePayloadCodec;
         this.cryptoProvider = cryptoProvider;
         this.advertisingPayloadCodec = advertisingPayloadCodec;
         this.nodesManager = nodesManager;
@@ -156,28 +156,28 @@ public class DefaultTransportProvider implements TransportProvider {
         switch (message.getType()) {
             case TransportMessage.TYPE_HANDSHAKE: {
                 logger.d(TAG, "Processing handshake from node " + message.getSenderRoutingId());
-                HandShakePayload handShakePayload = handShakePayloadCodec.parse(message.getPayload());
+                HandshakePayload handshakePayload = handshakePayloadCodec.parse(message.getPayload());
                 // Verify node info signature to check if this is true node info
-                if (!cryptoProvider.verify(handShakePayload.getSrcPubKey(), handShakePayload.getSignature(),
-                        handShakePayload.getSrcPubKey())) {
+                if (!cryptoProvider.verify(handshakePayload.getSrcPubKey(), handshakePayload.getSignature(),
+                        handshakePayload.getSrcPubKey())) {
                     logger.e(TAG, "Handshake signature verification failed for node " + message.getSenderRoutingId());
                     throw new MeshSecurityException("Invalid signature. Author prove failed");
                 }
 
                 // Check if this is response to our handshake or request for a new handshake
-                if (sentHandshakes.containsKey(Ed25519KeyPair.generateRoutingId(handShakePayload.getSrcPubKey()))) {
+                if (sentHandshakes.containsKey(Ed25519KeyPair.generateRoutingId(handshakePayload.getSrcPubKey()))) {
                     // Add node to nodes manager, because it can be not stored
                     addNode(message.getSenderRoutingId());
 
                     // Complete stored future with true, because handshake was successful
-                    sentHandshakes.get(Ed25519KeyPair.generateRoutingId(handShakePayload.getSrcPubKey()))
+                    sentHandshakes.get(Ed25519KeyPair.generateRoutingId(handshakePayload.getSrcPubKey()))
                             .complete(true);
                 } else {
                     // Add node to nodes manager, because it can be not stored
                     addNode(message.getSenderRoutingId());
                     // Send handshake response to node that requested it
                     logger.d(TAG, "Replying with handshake to node " + message.getSenderRoutingId());
-                    sendHandshakePayload(Ed25519KeyPair.generateRoutingId(handShakePayload.getSrcPubKey()));
+                    sendHandshakePayload(Ed25519KeyPair.generateRoutingId(handshakePayload.getSrcPubKey()));
                 }
                 break;
             }
@@ -214,14 +214,14 @@ public class DefaultTransportProvider implements TransportProvider {
         logger.d(TAG, "Sending handshake payload to node " + nodeRoutingId);
         // Create handshake payload with signed node info and pack it into the transport
         // message
-        HandShakePayload handShakePayload = new HandShakePayload(keyPair.publicKey(),
+        HandshakePayload handshakePayload = new HandshakePayload(keyPair.publicKey(),
                 cryptoProvider.sign(keyPair.publicKey(), keyPair.privateKey()));
         transportProviderEvents
                 .sendBytesToEveryone(
                         transportMessageCodec.serialize(
                                 new TransportMessage(TransportMessageConstants.VERSION, TransportMessage.TYPE_HANDSHAKE,
                                         keyPair.routingId(),
-                                        nodeRoutingId, handShakePayloadCodec.serialize(handShakePayload))));
+                                        nodeRoutingId, handshakePayloadCodec.serialize(handshakePayload))));
     }
 
     private void addNode(long nodeRoutingId) {
