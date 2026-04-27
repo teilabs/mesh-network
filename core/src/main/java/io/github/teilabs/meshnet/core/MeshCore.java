@@ -36,6 +36,7 @@ import io.github.teilabs.meshnet.core.transport.advertising.BinaryAdvertisingPay
 import io.github.teilabs.meshnet.core.transport.handshake.BinaryHandshakePayloadCodec;
 import io.github.teilabs.meshnet.core.transport.handshake.HandshakePayloadCodec;
 import io.github.teilabs.meshnet.core.util.Logger;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * Main class that provides communication between the daemon and other classes.
@@ -155,8 +156,8 @@ public class MeshCore implements CoreInput {
         this.handshakeScheduler = new HandshakeScheduler(this.config, this.logger, this.nodesManager,
                 new HandshakeSchedulerEvents() {
                     @Override
-                    public void sendHandshake(long nodeRoutingId) {
-                        transportProvider.sendHandshake(nodeRoutingId);
+                    public CompletableFuture<Boolean> sendHandshake(long nodeRoutingId) {
+                        return transportProvider.sendHandshake(nodeRoutingId);
                     }
                 });
 

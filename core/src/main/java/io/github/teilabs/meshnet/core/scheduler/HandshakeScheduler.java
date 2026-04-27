@@ -104,7 +104,11 @@ public class HandshakeScheduler {
             scheduler.schedule(() -> {
                 if (!running) return;
                 try {
-                    handshakeSchedulerEvents.sendHandshake(nodeId);
+                    handshakeSchedulerEvents.sendHandshake(nodeId).whenComplete((res, th) -> {
+                        if (!Boolean.TRUE.equals(res)) {
+                            nodesManager.removeNode(nodeId);
+                        }
+                    });
                 } catch (Exception e) {
                     logger.e(TAG, "Failed to send handshake to node " + nodeId, e);
                 }
