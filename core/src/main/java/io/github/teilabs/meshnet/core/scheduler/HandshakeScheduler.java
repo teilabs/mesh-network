@@ -9,6 +9,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * Class for periodically sending handshakes to all connected nodes.
+ */
 public class HandshakeScheduler {
     private static final String TAG = "HandshakeScheduler";
 
@@ -32,12 +35,17 @@ public class HandshakeScheduler {
         this.handshakeSchedulerEvents = handshakeSchedulerEvents;
     }
 
+    /**
+     * Starts handshake sending with interval from
+     * {@link Config#handshakeIntervalMs()}.
+     */
     public synchronized void start() {
         if (running) {
             logger.w(TAG, "Already running");
             return;
         }
 
+        // Create single thread executor for background handshake sending
         scheduler = Executors.newSingleThreadScheduledExecutor(r -> {
             Thread t = new Thread(r, "MeshCore-Handshake");
             t.setDaemon(true);
@@ -45,14 +53,19 @@ public class HandshakeScheduler {
             return t;
         });
 
+        // Mark as running
         running = true;
 
+        // Start broadcastHandshakes with specific interval between calls
         scheduler.scheduleAtFixedRate(this::broadcastHandshakes, config.handshakeIntervalMs(),
                 config.handshakeIntervalMs(), TimeUnit.MILLISECONDS);
 
         logger.i(TAG, "Started with interval=" + (config.handshakeIntervalMs() / 1000) + "s");
     }
-    
+
+    /**
+     * Stops handshake sending.
+     */
     public synchronized void stop() {
         if (!running) {
             logger.w(TAG, "Already stopped");
@@ -60,6 +73,7 @@ public class HandshakeScheduler {
         }
 
         if (scheduler != null) {
+            // Shutdown scheduler and wait for proper shutdown
             scheduler.shutdown();
             try {
                 if (!scheduler.awaitTermination(5, TimeUnit.SECONDS)) {
@@ -67,6 +81,7 @@ public class HandshakeScheduler {
                     scheduler.shutdownNow();
                 }
             } catch (InterruptedException e) {
+                // Hard shutdown scheduler if it isn't shutdown properly
                 logger.e(TAG, "Interrupted while waiting for scheduler shutdown", e);
                 scheduler.shutdownNow();
                 Thread.currentThread().interrupt();
@@ -74,14 +89,17 @@ public class HandshakeScheduler {
             scheduler = null;
         }
 
+        // Mark as stopped
         running = false;
 
         logger.i(TAG, "Stopped");
     }
 
     private void broadcastHandshakes() {
-        if (!running) return;
+        if (!running)
+            return;
 
+        // Copy connected nodes list to prevent ConcurrentModificationExceptions
         Set<Long> nodesSnapshot;
         try {
             nodesSnapshot = new HashSet<>(nodesManager.getNodes());
@@ -99,11 +117,17 @@ public class HandshakeScheduler {
 
         int processedNodesCount = 0;
         for (long nodeId : nodesSnapshot) {
+            // Calculate node unique offset to distribute the load evenly over time on the
+            // connection interface
             long offset = (long) ((config.handshakeIntervalMs() * processedNodesCount) / nodesSnapshot.size());
 
+            // Send handshake after offset using scheduler
             scheduler.schedule(() -> {
-                if (!running) return;
+                if (!running)
+                    return;
                 try {
+                    // When handshake completed remove node from nodesManager if handshake completed
+                    // with false result or error
                     handshakeSchedulerEvents.sendHandshake(nodeId).whenComplete((res, th) -> {
                         if (!Boolean.TRUE.equals(res)) {
                             nodesManager.removeNode(nodeId);
