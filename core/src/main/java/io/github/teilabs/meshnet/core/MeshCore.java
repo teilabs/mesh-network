@@ -178,4 +178,27 @@ public class MeshCore implements CoreInput {
         Frame frame = meshMessageCodec.generateOutgoingFrame(message);
         frameRouter.sendFrame(frame);
     }
+
+    @Override
+    public void shutdown() {
+        handshakeScheduler.stop();
+        transportProvider.stopAdvertising();
+
+        logger.i(TAG, "Shutdown");
+    }
+
+    @Override
+    public void startAdvertising(int intervalMs) {
+        transportProvider.startAdvertising(intervalMs);
+    }
+
+    @Override
+    public void stopAdvertising() {
+        transportProvider.stopAdvertising();
+    }
+
+    @Override
+    public Ed25519KeyPair getKeyPair() {
+        return new Ed25519KeyPair(null, keyPair.publicKey(), keyPair.routingId());
+    }
 }

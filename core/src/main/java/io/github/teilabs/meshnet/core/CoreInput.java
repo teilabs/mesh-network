@@ -1,6 +1,7 @@
 package io.github.teilabs.meshnet.core;
 
 import io.github.teilabs.meshnet.core.api.MeshOutgoingMessage;
+import io.github.teilabs.meshnet.core.crypto.Ed25519KeyPair;
 
 /**
  * Events that {@link MeshCore} can handle.
@@ -19,4 +20,26 @@ public interface CoreInput {
      * @param message message that app want to send
      */
     void onAppSendMessage(MeshOutgoingMessage message);
+
+    /**
+     * Called by daemon to shutdown MeshCore.
+     */
+    void shutdown();
+
+    /**
+     * Called by daemon to change advertising state to started.
+     * 
+     * @param intervalMs interval in milliseconds
+     */
+    void startAdvertising(int intervalMs);
+
+    /**
+     * Called by daemon to change advertising state to stopped.
+     */
+    void stopAdvertising();
+
+    /**
+     * Called by daemon to get current node's key pair without private key.
+     */
+    Ed25519KeyPair getKeyPair();
 }

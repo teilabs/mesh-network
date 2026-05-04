@@ -57,6 +57,7 @@ public final class CoreBridge implements CoreEvents, Logger {
         AndroidLogger.i(TAG, "Stopping core bridge");
         // sdkSocketServer.close();
         daemonSocketClient.stop();
+        meshCore.shutdown();
     }
 
     @Override
