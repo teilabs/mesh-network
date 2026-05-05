@@ -10,6 +10,10 @@ import io.github.teilabs.meshnet.core.crypto.Ed25519KeyPair;
 import io.github.teilabs.meshnet.core.exception.MeshStorageException;
 import io.github.teilabs.meshnet.core.exception.MeshValidationException;
 
+/**
+ * Class for storing {@link Ed25519KeyPair key pair} in Android encrypted
+ * storage.
+ */
 public final class AndroidKeyStorage {
     private static final String TAG = "AndroidKeyStorage";
     private static final String PREF_NAME = "mesh_keys";
@@ -47,6 +51,11 @@ public final class AndroidKeyStorage {
         }
     }
 
+    /**
+     * Loads key pair from encrypted storage.
+     * 
+     * @return loaded key pair
+     */
     public Ed25519KeyPair loadKeyPair() {
         String publicBase64 = prefs.getString(KEY_PUBLIC, null);
         String privateBase64 = prefs.getString(KEY_PRIVATE, null);

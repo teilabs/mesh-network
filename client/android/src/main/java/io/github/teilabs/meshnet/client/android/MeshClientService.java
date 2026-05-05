@@ -8,6 +8,9 @@ import androidx.annotation.Nullable;
 
 import io.github.teilabs.meshnet.core.config.Config;
 
+/**
+ * Starting point for the client app.
+ */
 public final class MeshClientService extends Service {
     @Nullable
     private ClientEngine clientEngine;

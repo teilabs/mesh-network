@@ -17,6 +17,9 @@ import io.github.teilabs.meshnet.core.exception.MeshValidationException;
 import io.github.teilabs.meshnet.core.routing.Tunnel;
 import io.github.teilabs.meshnet.core.util.Logger;
 
+/**
+ * Class that connects the core with the client app.
+ */
 public final class CoreBridge implements CoreEvents, Logger {
     private static final String TAG = "CoreBridge";
 
@@ -47,12 +50,18 @@ public final class CoreBridge implements CoreEvents, Logger {
         AndroidLogger.i(TAG, "Core bridge initialized");
     }
 
+    /**
+     * Starts the core bridge and services in it.
+     */
     public void start() {
         AndroidLogger.i(TAG, "Starting core bridge");
         // sdkSocketServer.start();
         daemonSocketClient.start();
     }
 
+    /**
+     * Stops the core bridge and services in it.
+     */
     public void stop() {
         AndroidLogger.i(TAG, "Stopping core bridge");
         // sdkSocketServer.close();
@@ -92,7 +101,8 @@ public final class CoreBridge implements CoreEvents, Logger {
     @Override
     public Ed25519KeyPair getKeyPair() {
         Ed25519KeyPair keyPair = androidKeyStorage.loadKeyPair();
-        AndroidLogger.d(TAG, keyPair != null ? "Loaded key pair from Android storage" : "No key pair in Android storage");
+        AndroidLogger.d(TAG,
+                keyPair != null ? "Loaded key pair from Android storage" : "No key pair in Android storage");
         return keyPair;
     }
 
